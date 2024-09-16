@@ -11,11 +11,28 @@ It contains several subdirectories that will contain standard elements of almost
 
 # Project documentation 
 
-## Project Log
+## Environment Setup
 
-When we spin up a new project, the first thing we'll do to collect our thoughts is to create a [Notion project](https://www.notion.so/social-interaction-lab/010f6821fc4e4aa1b7ec07716fd6cdc1?v=028218a3e35a4c079194b04b347a4d09&pvs=4) or a Google Doc to function as a running "log" of project updates and meeting notes. 
-The point is to have a file format that is easy to share and flexible in format. 
-This Google Doc / Notion page is also where you should take notes during our meetings, and collect high-level TODO items, especially those that are not immediately actionable. 
+Gaze-contingent code in the Infant Learning Lab (as of Fall 2024) has some dependencies: 
+- `tobii-research` package (dependant on python 3.10)
+- `psychopy` package (python 3.10 as of 2022)
+- `pygaze`
+
+To help with setup, I have created a python environment with all packages installed on the Dolphin booth in the main lab. This enviroment and the code should work cross-platform on Mac (non-M1 chip because of `tobii-research`) and PC if you wish to develop outside the lab. 
+
+## Running the Code
+
+### Dummy Mode
+
+Toggle dummy mode = TRUE in the constants file
+
+## Other notes
+
+ALL audio, in video or otherwise, must have a sampling rate of 44100HZ. The following code using ffmpeg will convert any mp3 into 44100 sampling rate with 1 channel. 
+
+```
+for i in *-raw.mp3; do ffmpeg -i "$i" -ar 44100 -ac 1 "${i%-raw.mp3}.mp3"; done  
+```
 
 ## Preregistration
 
