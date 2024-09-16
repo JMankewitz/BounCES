@@ -16,7 +16,7 @@ It contains several subdirectories that will contain standard elements of almost
 Gaze-contingent code in the Infant Learning Lab (as of Fall 2024) has some dependencies: 
 - `tobii-research` package (dependant on python 3.10)
 - `psychopy` package (python 3.10 as of 2022)
-- `pygaze`
+- `python-pygaze==0.7.6` (python>3)
 
 To help with setup, I have created a python environment with all packages installed on the Dolphin booth in the main lab. This enviroment and the code should work cross-platform on Mac (non-M1 chip because of `tobii-research`) and PC if you wish to develop outside the lab. 
 
