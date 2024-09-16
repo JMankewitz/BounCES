@@ -1,14 +1,9 @@
 ## ignoring by default
 .DS_Store
 .ipynb_checkpoints/
-*.csv
 *.json
 *.pdf
-*.png
-*.jpeg
-*.jpg
 *.tiff
-*.svg
 *.eps
 *.ai
 *.aux
@@ -54,14 +49,9 @@ __pycache__/
 *.pdf
 
 .DS_Store
-*.csv
 *.json
-*.pdf
-*.png
 *.jpeg
-*.jpg
 *.tiff
-*.svg
 *.eps
 *.ai
 auth.json
