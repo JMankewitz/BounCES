@@ -339,11 +339,24 @@ class ExpPresentation(Exp):
 			libtime.pause(duration)
 
 		elif curTrial['AGType'] == "movie":
+
+			if curTrial['AGAudio'] != "none":
+				curSound = self.AGsoundMatrix[curTrial['AGAudio']]
+				#just use the psychopy prefs, not the winsound stuff...
+				curSound.play()
+
 			# load movie stim
-			# mov = visual.MovieStim3(self.experiment.win, self.experiment.moviePath+curTrial['AGVideo'] )
+
 			mov = self.AGmovieMatrix[curTrial['AGVideo']]
-			#mov.loadMovie(self.experiment.moviePath + curTrial['AGVideo'] + self.movieExt)
 			mov.size = (self.x_length, self.y_length)
+
+			mov.play()
+
+			while not mov.isFinished:
+				mov.draw()
+				self.experiment.win.flip()
+			
+			mov.stop()
 
 			#if curTrial['AGAudio'] != "none":
 		#		curSound = self.AGsoundMatrix[curTrial['AGAudio']]
@@ -355,15 +368,11 @@ class ExpPresentation(Exp):
 			#if self.experiment.subjVariables['eyetracker'] == "yes":
 			#	# log event
 		#		self.experiment.tracker.log("presentAGMovie")
-			mov.play()
-			#while mov.status != visual.FINISHED:
-			#	print(mov.status)
-			#	mov.draw()
-			#	self.experiment.win.flip()
+
 			
-			if mov.isFinished:
-				mov.stop()
-				mov.reset()
+			#if mov.isFinished:
+			#	mov.stop()
+			#	mov.reset()
 				#curSound.stop()
 
 		# if getInput=True, wait for keyboard press before advancing
