@@ -462,19 +462,20 @@ class ExpPresentation(Exp):
 		# Find Psychopy Stim from image matrix
 		# Left
 		self.leftStimMov = self.movieMatrix[leftStimName]
-		self.leftStimMov.setPos(self.pos['centerLeft'])
-		self.leftStimMov.size = (self.x_length, self.y_length)
-
+		self.leftStimMov.pos = self.pos['centerLeft']
+		self.leftStimMov.size = (self.x_length/2, self.y_length)
+		#self.leftStimMov.autoDraw = True
 		# Right
 		self.rightStimMov = self.movieMatrix[rightStimName]
-		self.rightStimMov.setPos(self.pos['centerLeft'])
-		self.rightStimMov.size = (self.x_length, self.y_length)
+		self.rightStimMov.pos = self.pos['centerRight']
+		self.rightStimMov.size = (self.x_length/2, self.y_length)
+		#self.rightStimMov.autoDraw = True
 
 		self.leftStimMov.draw()
 		self.leftStimMov.pause()
 		self.rightStimMov.draw()
 		self.rightStimMov.pause()
-
+		self.experiment.win.flip()
 
 		# Initialize eyetracker
 
@@ -539,7 +540,14 @@ class ExpPresentation(Exp):
 
 		# Count up to the
 		while libtime.get_time() - trialTimerStart < self.timeoutTime:
+			self.leftStimMov.draw()
+			self.rightStimMov.draw()
 			self.experiment.win.flip()
+			# if video has ended, restart...
+			if self.leftStimMov.isFinished:
+				self.leftStimMov.seek(0.0)
+			if self.rightStimMov.isFinished:
+				self.rightStimMov.seek(0.0)
 
 			if self.experiment.subjVariables['activeMode'] == 'gaze':
 				# get gaze position
@@ -690,7 +698,7 @@ class ExpPresentation(Exp):
 				self.soundMatrix[chosenAudio].setLoops(-1)
 				#print(self.activeSoundMatrix[chosenAudio].loops)
 				self.soundMatrix[chosenAudio].play(loops=3)
-				chosenVieo.draw()
+				chosenVieo.play()
 
 				audioTime = libtime.get_time()
 				audioStartTime_list.append(audioTime)
@@ -751,7 +759,7 @@ class ExpPresentation(Exp):
 					firstTrigger = 0
 					# stop sound
 					self.soundMatrix[chosenAudio].stop()
-					#chosenVieo.stop()
+					chosenVieo.pause()
 
 					audioStopTime = libtime.get_time()
 					audioPlayTime_list.append(audioStopTime - audioTime)
@@ -781,8 +789,11 @@ class ExpPresentation(Exp):
 			audioPlayTime_list.append(audioStopTime - audioTime)
 			audioStopTime_list.append(audioStopTime)
 
-		self.experiment.disp.fill()
+		self.leftStimMov.stop()
+		self.rightStimMov.stop()
+		self.experiment.disp.fill(self.experiment.blackScreen)
 		self.experiment.disp.show()
+		
 
 		trialTimerEnd = libtime.get_time()
 		# trial time
