@@ -190,7 +190,7 @@ class ExpPresentation(Exp):
 		(self.activeTrainingTrialsMatrix, self.activeTrainingTrialFieldNames) = importTrials(activeTrainingTrialPath, method="sequential")
 		(self.activeTestTrialsMatrix, self.activeTrialFieldNames) = importTrials(activeTestTrialPath, method="sequential")
 
-		self.movieMatrix = loadFilesMovie(self.experiment.moviePath, ['mp4'], 'movie', self.experiment.win)
+		self.movieMatrix = loadFilesMovie(self.experiment.moviePath, ['mp4', 'mov'], 'movie', self.experiment.win)
 		self.AGmovieMatrix = loadFilesMovie(self.experiment.AGPath, ['mp4'], 'movie', self.experiment.win)
 		self.soundMatrix = loadFiles(self.experiment.soundPath, ['.mp3', '.wav'], 'sound')
 		self.AGsoundMatrix = loadFiles(self.experiment.AGPath, ['.mp3', '.wav'], 'sound')
@@ -360,32 +360,13 @@ class ExpPresentation(Exp):
 
 			#if curTrial['AGAudio'] != "none":
 		#		curSound = self.AGsoundMatrix[curTrial['AGAudio']]
-	#			playAndWait(curSound, waitFor=0)
-#				if self.experiment.subjVariables['eyetracker'] == "yes":
-#					# log event
-#					self.experiment.tracker.log("presentAGAudio")
 
-			#if self.experiment.subjVariables['eyetracker'] == "yes":
-			#	# log event
-		#		self.experiment.tracker.log("presentAGMovie")
-
-			
-			#if mov.isFinished:
-			#	mov.stop()
-			#	mov.reset()
-				#curSound.stop()
-
-		# if getInput=True, wait for keyboard press before advancing
- 		#if getInput == "yes":
-	#		self.experiment.input.waitKeys(keyList=['space']) 
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# stop eye tracking
 			self.experiment.tracker.log("endAG")
 			self.experiment.tracker.stop_recording()
 
 		self.experiment.disp.fill(self.experiment.blackScreen)
-
-	# self.experiment.win2.flip(clearBuffer=True)
 
 	def presentTrial(self, curTrial, curTrialIndex, stage, getInput):
 
@@ -405,24 +386,16 @@ class ExpPresentation(Exp):
 			self.experiment.tracker.log(logData)
 
 		#grab correct movie, sound, and images
+		curSound = self.soundMatrix[curTrial['label']]
 		mov = self.movieMatrix[curTrial['video']]
-		curSound = self.soundMatrix[curTrial['video']]
-		left_image = self.imageMatrix[curTrial['leftImage']][0]
-		left_image.pos = self.pos['stimleft']
-		right_image = self.imageMatrix[curTrial['rightImage']][0]
-		right_image.pos = self.pos['stimright']
-
 		# set image sizes
-		left_image.size = (300, 300)
-		right_image.size = (300, 300)
+
 		mov.size = (self.x_length, self.y_length)
 
 		#load sound until window flip for latency
 
 		mov.draw()
 		mov.pause()
-		left_image.draw()
-		right_image.draw()
 		self.experiment.win.flip()
 
 		trialTimerStart = libtime.get_time()
@@ -430,23 +403,17 @@ class ExpPresentation(Exp):
 		curSound.volume = 2
 		curSound.play()
 		mov.play()
-
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# log event
 			self.experiment.tracker.log("startScreen")
 
-		while mov.status != visual.FINISHED:
-			mov.draw()
-			left_image.draw()
-			right_image.draw()
-			self.experiment.win.flip()
+		while not mov.isFinished:
+				mov.draw()
+				self.experiment.win.flip()
 
-		if mov.status == visual.FINISHED:
-			mov.pause()
-			mov.stop()
-			mov.reset()
-			curSound.stop()
-
+		mov.stop()
+		curSound.stop()
+		
 		libtime.pause(self.endSilence)
 
 		######Stop Eyetracking######
@@ -484,92 +451,30 @@ class ExpPresentation(Exp):
 		with open(trigger_filename, "w", newline='') as file:
 			writer = csv.writer(file)
 			writer.writerow(csv_header)
-		# Contingent Timing Vars
 
-		# Set up screens
-		# Active Screen(s) #
-		# Picture Names (should match name in left/right image column
-		# Left speaker
+		self.experiment.disp.show()
 
-		speakerImageSize = (420, 600)
-		novelImageSize = (200, 200)
-
-		leftSpeakerImageGrayName = curTrial['leftImage'] + '_grayscale'
-		leftSpeakerImageColorName =curTrial['leftImage'] + '_color'
-		# Right speaker
-		rightSpeakerImageGrayName = curTrial['rightImage'] + '_grayscale'
-		rightSpeakerImageColorName = curTrial['rightImage'] + '_color'
+		#speakerImageSize = (420, 600)
+		#novelImageSize = (200, 200)
+		leftStimName = curTrial['leftStim']
+		rightStimName = curTrial['rightStim']
 
 		# Find Psychopy Stim from image matrix
 		# Left
-		self.leftSpeakerGrayImage = self.imageMatrix[leftSpeakerImageGrayName][0]
-		self.leftSpeakerGrayImage.setPos(self.pos['centerLeft'])
-		self.leftSpeakerGrayImage.size = speakerImageSize
+		self.leftStimMov = self.movieMatrix[leftStimName]
+		self.leftStimMov.setPos(self.pos['centerLeft'])
+		self.leftStimMov.size = (self.x_length, self.y_length)
 
-		self.leftSpeakerColorImage = self.imageMatrix[leftSpeakerImageColorName][0]
-		self.leftSpeakerColorImage.setPos(self.pos['centerLeft'])
-		self.leftSpeakerColorImage.size = speakerImageSize
 		# Right
-		self.rightSpeakerGrayImage = self.imageMatrix[rightSpeakerImageGrayName][0]
-		self.rightSpeakerGrayImage.setPos(self.pos['centerRight'])
-		self.rightSpeakerGrayImage.size = speakerImageSize
+		self.rightStimMov = self.movieMatrix[rightStimName]
+		self.rightStimMov.setPos(self.pos['centerLeft'])
+		self.rightStimMov.size = (self.x_length, self.y_length)
 
-		self.rightSpeakerColorImage = self.imageMatrix[rightSpeakerImageColorName][0]
-		self.rightSpeakerColorImage.setPos(self.pos['centerRight'])
-		self.rightSpeakerColorImage.size = speakerImageSize
+		self.leftStimMov.draw()
+		self.leftStimMov.pause()
+		self.rightStimMov.draw()
+		self.rightStimMov.pause()
 
-
-		# Initialize Screens
-		self.activeGrayScreen = libscreen.Screen(disptype='psychopy')
-		self.activeColorScreen = libscreen.Screen(disptype='psychopy')
-
-		# activated screens
-		self.activeLeftScreen = libscreen.Screen(disptype='psychopy')
-		self.activeRightScreen = libscreen.Screen(disptype='psychopy')
-
-		#Active Gray
-		buildScreenPsychoPy(self.activeGrayScreen, [self.leftSpeakerGrayImage, self.rightSpeakerGrayImage])
-		buildScreenPsychoPy(self.activeColorScreen, [self.leftSpeakerColorImage, self.rightSpeakerColorImage])
-		buildScreenPsychoPy(self.activeLeftScreen, [self.leftSpeakerColorImage, self.rightSpeakerGrayImage])
-		buildScreenPsychoPy(self.activeRightScreen, [self.leftSpeakerGrayImage, self.rightSpeakerColorImage])
-
-		if stage == "activeTest":
-
-			# Load correct novel images
-			leftNovelImageGrayName = curTrial['novelImage'] + '_left_grayscale'
-			rightNovelImageGrayName = curTrial['novelImage'] + '_right_grayscale'
-			leftNovelImageColorName = curTrial['novelImage'] + '_left_color'
-			rightNovelImageColorName = curTrial['novelImage'] + '_right_color'
-
-			# Find Psychopy Stim from image matrix
-			# Left
-			self.leftNovelGrayImage = self.imageMatrix[leftNovelImageGrayName][0]
-			self.leftNovelGrayImage.setPos(self.pos['sampleStimLeft'])
-			self.leftNovelGrayImage.size = novelImageSize
-
-			self.leftNovelColorImage = self.imageMatrix[leftNovelImageColorName][0]
-			self.leftNovelColorImage.setPos(self.pos['sampleStimLeft'])
-			self.leftNovelColorImage.size = novelImageSize
-
-			# Right
-			self.rightNovelGrayImage = self.imageMatrix[rightNovelImageGrayName][0]
-			self.rightNovelGrayImage.setPos(self.pos['sampleStimRight'])
-			self.rightNovelGrayImage.size = novelImageSize
-
-			self.rightNovelColorImage = self.imageMatrix[rightNovelImageColorName][0]
-			self.rightNovelColorImage.setPos(self.pos['sampleStimRight'])
-			self.rightNovelColorImage.size = novelImageSize
-
-			self.activeGrayScreen.screen.append(self.rightNovelGrayImage)
-			self.activeGrayScreen.screen.append(self.leftNovelGrayImage)
-
-			self.activeLeftScreen.screen.append(self.leftNovelColorImage)
-			self.activeLeftScreen.screen.append(self.rightNovelGrayImage)
-			self.activeRightScreen.screen.append(self.rightNovelColorImage)
-			self.activeRightScreen.screen.append(self.leftNovelGrayImage)
-
-			self.activeColorScreen.screen.append(self.leftNovelColorImage)
-			self.activeColorScreen.screen.append(self.rightNovelColorImage)
 
 		# Initialize eyetracker
 
@@ -584,17 +489,12 @@ class ExpPresentation(Exp):
 				logData += " " + field + " " + str(curTrial[field])
 			self.experiment.tracker.log(logData)
 
-		setAndPresentScreen(self.experiment.disp, self.activeColorScreen)
-
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# log event
 			self.experiment.tracker.log("startScreen")
 
-		# pause for non-contingent color display
+		# pause for non-contingent frozen display
 		libtime.pause(self.startDisplay)
-
-		#start contingent
-		setAndPresentScreen(self.experiment.disp, self.activeGrayScreen)
 
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# log event
@@ -628,7 +528,7 @@ class ExpPresentation(Exp):
 		# list of events
 		rt_list = []
 		response_list = []
-		chosenImage_list = []
+		chosenStim_list = []
 		chosenLabel_list = []
 		chosenAudio_list = []
 		chosenRole_list = []
@@ -639,6 +539,7 @@ class ExpPresentation(Exp):
 
 		# Count up to the
 		while libtime.get_time() - trialTimerStart < self.timeoutTime:
+			self.experiment.win.flip()
 
 			if self.experiment.subjVariables['activeMode'] == 'gaze':
 				# get gaze position
@@ -774,20 +675,22 @@ class ExpPresentation(Exp):
 					response_list.append(response)
 
 			if firstTrigger == 1:
-				chosenImage = curTrial[response + "Image"]
+				chosenStim = curTrial[response + "Stim"]
 				chosenAudio = curTrial[response + 'Audio']
-				chosenImage_list.append(chosenImage)
+				chosenStim_list.append(chosenStim)
 				chosenAudio_list.append(chosenAudio)
 				if response == "left":
-					setAndPresentScreen(self.experiment.disp, self.activeLeftScreen)
-				if response == "right":
-					setAndPresentScreen(self.experiment.disp, self.activeRightScreen)
+					chosenVieo = self.leftStimMov
 
-				# Start audio
+				if response == "right":
+					chosenVieo = self.rightStimMov
+
+				# Start audio and draw video
 
 				self.soundMatrix[chosenAudio].setLoops(-1)
 				#print(self.activeSoundMatrix[chosenAudio].loops)
 				self.soundMatrix[chosenAudio].play(loops=3)
+				chosenVieo.draw()
 
 				audioTime = libtime.get_time()
 				audioStartTime_list.append(audioTime)
@@ -848,12 +751,13 @@ class ExpPresentation(Exp):
 					firstTrigger = 0
 					# stop sound
 					self.soundMatrix[chosenAudio].stop()
+					#chosenVieo.stop()
+
 					audioStopTime = libtime.get_time()
 					audioPlayTime_list.append(audioStopTime - audioTime)
 					audioStopTime_list.append(audioStopTime)
 
 					# reset screen
-					setAndPresentScreen(self.experiment.disp, self.activeGrayScreen)
 					if self.experiment.subjVariables['eyetracker'] == "yes":
 						# log audio event end
 						self.experiment.tracker.log(
@@ -872,6 +776,7 @@ class ExpPresentation(Exp):
 		if eventTriggered == 1:
 			# stop sound
 			self.soundMatrix[chosenAudio].stop()
+			chosenVieo.stop()
 			audioStopTime = libtime.get_time()
 			audioPlayTime_list.append(audioStopTime - audioTime)
 			audioStopTime_list.append(audioStopTime)
@@ -981,7 +886,7 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
+#currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
 #currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
-#currentPresentation.cycleThroughTrials(whichPart = "activeTest")
+currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()

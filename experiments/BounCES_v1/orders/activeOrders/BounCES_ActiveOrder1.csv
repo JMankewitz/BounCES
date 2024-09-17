@@ -1,3 +1,2 @@
-﻿trialType,trialID,blockID,leftImage,rightImage,leftSpeakerType,rightSpeakerType,novelImage,leftLabel,rightLabel,leftAudio,rightAudio,trialDuration,trialStartSilence,trialEndSilence,AG,AGType,AGImage,AGAudio,AGVideo,AGTime,AGgetInput,AGWidth,AGHeight
-activeTest,1,1,exp1,exp2,reliable,unreliable,novel_1,manu,coodle,exp1_this_manu_long,exp2_look_coodle_long,5000,0,0,0,,,,,,,,
-activeTest,2,1,exp1,exp2,reliable,unreliable,novel_2,modi,toma,exp1_look_modi_long,exp2_this_toma_long,5000,0,0,0,,,,,,,,
+﻿trialType,trialID,blockID,leftStim,rightStim,leftStimType,rightStimType,leftLabel,rightLabel,leftAudio,rightAudio,trialDuration,trialStartSilence,trialEndSilence,AG,AGType,AGImage,AGAudio,AGVideo,AGTime,AGgetInput,AGWidth,AGHeight
+activeTest,1,1,A-B_A_Left,CP_C_Right,boundary,prototype,bosa,doff,three_bosas,three_doffs,5000,0,0,0,,,,,,,,
