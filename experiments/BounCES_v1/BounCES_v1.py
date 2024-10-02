@@ -233,7 +233,7 @@ class ExpPresentation(Exp):
 
 		# sampling threshold - when the gaze will trigger (20 samples = 333.333 ms)
 		self.lookAwayPos = (-1,-1)
-		self.maxLabelTime = 10000 # (ms) Maximum length of time each image can be sampled before the screen resets.
+		self.maxLabelTime = 8000 # (ms) Maximum length of time each image can be sampled before the screen resets.
 
 		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)
 
@@ -495,7 +495,37 @@ class ExpPresentation(Exp):
 			self.experiment.tracker.log("startScreen")
 
 		# pause for non-contingent frozen display
-		libtime.pause(self.startDisplay)
+		
+		# start playing each video for 1 sec
+		activefamstartleft = libtime.get_time()
+		self.activefamtimeoutTime = 2500
+		while libtime.get_time() - activefamstartleft < self.activefamtimeoutTime:
+			self.leftStimMov.play()
+			self.leftStimMov.draw()
+			#self.rightStimMov.draw()
+			self.experiment.win.flip()
+		self.leftStimMov.pause()
+
+		activefamstartright = libtime.get_time()
+		while libtime.get_time() - activefamstartright < self.activefamtimeoutTime:
+			self.rightStimMov.play()
+			self.rightStimMov.draw()
+			#self.leftStimMov.draw()
+			self.experiment.win.flip()
+		self.rightStimMov.pause()
+
+		libtime.pause(500)
+
+		activefamstarttogether = libtime.get_time()
+		while libtime.get_time() - activefamstarttogether < self.activefamtimeoutTime:
+			self.rightStimMov.play()
+			self.leftStimMov.play()
+			self.rightStimMov.draw()
+			self.leftStimMov.draw()
+			self.experiment.win.flip()
+		self.rightStimMov.pause()
+		self.leftStimMov.pause()
+
 
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# log event
@@ -503,7 +533,6 @@ class ExpPresentation(Exp):
 			log_file_list = [libtime.get_time(), "startContingent", None
 							 , None, None
 							 , None]
-
 		with open(trigger_filename, 'a', newline='') as file:
 			writer = csv.writer(file)
 			writer.writerow(log_file_list)
@@ -897,7 +926,7 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-#currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
 #currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+#currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
 currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
