@@ -208,7 +208,7 @@ class ExpPresentation(Exp):
 		print(self.x_length, self.y_length)
 
 		self.pos = {'bottomLeft': (-256, 0), 'bottomRight': (256, 0),
-					'centerLeft': (-600, 0), 'centerRight': (600, 0),
+					'centerLeft': (-480, 0), 'centerRight': (480, 0),
 					'topLeft': (-self.x_length/4, self.y_length/4),
 					'topRight': (self.x_length/4, self.y_length/4),
 					'center': (0, 0),
@@ -219,21 +219,20 @@ class ExpPresentation(Exp):
 					}
 
 		# Contingent Timing Settings
-		self.startDisplay = 1000  # (ms) time for images in full color before contingent phase starts
 		self.firstTriggerThreshold = 250  # (ms) time to accumulate looks before triggering image
 		self.awayThreshold = 300  # (ms) time of NA/away looks for contingent ends - should account for blinks. Lower is more sensitive, higher is more forgiving.
 		self.noneThreshold = 250  # (ms) time of look to on-screen but non-trigger AOI before contingent ends - should account for shifts
 
-		self.timeoutTime = 20 * 1000  # (ms) 30s, length of trial
-		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 190), size = (620, 700))
-		self.aoiRight = aoi.AOI('rectangle', pos= (1300, 190), size=(620, 700))
+		self.timeoutTime = 15000  # (ms) 30s, length of trial
+		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 190), size = (800, 700))
+		self.aoiRight = aoi.AOI('rectangle', pos= (1120, 190), size=(800, 700))
 		self.ISI = 1000
 		self.startSilence = 0
 		self.endSilence = 1000
 
 		# sampling threshold - when the gaze will trigger (20 samples = 333.333 ms)
 		self.lookAwayPos = (-1,-1)
-		self.maxLabelTime = 8000 # (ms) Maximum length of time each image can be sampled before the screen resets.
+		self.maxLabelTime = 15000 # (ms) Maximum length of time each image can be sampled before the screen resets.
 
 		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)
 
@@ -471,10 +470,10 @@ class ExpPresentation(Exp):
 		self.rightStimMov.size = (self.x_length/2, self.y_length)
 		#self.rightStimMov.autoDraw = True
 
-		self.leftStimMov.draw()
-		self.leftStimMov.pause()
-		self.rightStimMov.draw()
-		self.rightStimMov.pause()
+		#self.leftStimMov.draw()
+		#self.leftStimMov.pause()
+		#self.rightStimMov.draw()
+		#self.rightStimMov.pause()
 		self.experiment.win.flip()
 
 		# Initialize eyetracker
@@ -498,34 +497,31 @@ class ExpPresentation(Exp):
 		
 		# start playing each video for 1 sec
 		activefamstartleft = libtime.get_time()
-		self.activefamtimeoutTime = 2500
+		self.activefamtimeoutTime = 2000
 		while libtime.get_time() - activefamstartleft < self.activefamtimeoutTime:
-			self.leftStimMov.play()
+			self.leftStimMov.pause()
 			self.leftStimMov.draw()
-			#self.rightStimMov.draw()
 			self.experiment.win.flip()
 		self.leftStimMov.pause()
 
 		activefamstartright = libtime.get_time()
 		while libtime.get_time() - activefamstartright < self.activefamtimeoutTime:
-			self.rightStimMov.play()
+			self.rightStimMov.pause()
 			self.rightStimMov.draw()
-			#self.leftStimMov.draw()
 			self.experiment.win.flip()
 		self.rightStimMov.pause()
 
 		libtime.pause(500)
 
-		activefamstarttogether = libtime.get_time()
-		while libtime.get_time() - activefamstarttogether < self.activefamtimeoutTime:
-			self.rightStimMov.play()
-			self.leftStimMov.play()
-			self.rightStimMov.draw()
-			self.leftStimMov.draw()
+		start = libtime.get_time()
+		while libtime.get_time() - start < 1500:
+			stim = visual.TextStim(self.experiment.win, '+',
+                       color="white")
+			stim.size = 300
+			#self.rightStimMov.draw()
+			#self.leftStimMov.draw()
+			stim.draw()
 			self.experiment.win.flip()
-		self.rightStimMov.pause()
-		self.leftStimMov.pause()
-
 
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# log event
@@ -569,14 +565,16 @@ class ExpPresentation(Exp):
 
 		# Count up to the
 		while libtime.get_time() - trialTimerStart < self.timeoutTime:
-			self.leftStimMov.draw()
-			self.rightStimMov.draw()
-			self.experiment.win.flip()
 			# if video has ended, restart...
 			if self.leftStimMov.isFinished:
 				self.leftStimMov.seek(0.0)
+				self.leftStimMov.pause()
 			if self.rightStimMov.isFinished:
 				self.rightStimMov.seek(0.0)
+				self.rightStimMov.pause()
+			self.leftStimMov.draw()
+			self.rightStimMov.draw()
+			self.experiment.win.flip()
 
 			if self.experiment.subjVariables['activeMode'] == 'gaze':
 				# get gaze position
@@ -927,6 +925,6 @@ currentPresentation = ExpPresentation(currentExp)
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
 #currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
-#currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
+currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
 currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
