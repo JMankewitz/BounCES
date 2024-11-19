@@ -390,7 +390,6 @@ class ExpPresentation(Exp):
 		# set image sizes
 
 		mov.size = (self.x_length, self.y_length)
-
 		#load sound until window flip for latency
 
 		mov.draw()
@@ -924,7 +923,7 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
 currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
 currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()

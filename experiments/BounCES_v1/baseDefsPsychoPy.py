@@ -263,7 +263,7 @@ def loadFilesMovie(directory, extension, fileType, win='', whichFiles='*', stimL
 			fileMatrix[stimFile] = ((soundRef))
 			fileMatrix[stimFile + '-path'] = fullPath  # this allows asynchronous playing in winSound.
 		elif fileType == "movie":
-			movie = visual.MovieStim(win, fullPath, noAudio = True, opacity = .5)
+			movie = visual.MovieStim(win, fullPath, noAudio = True)
 			fileMatrix[stimFile] = ((movie))
 
 	# check
