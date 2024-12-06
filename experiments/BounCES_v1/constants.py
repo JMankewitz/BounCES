@@ -3,6 +3,7 @@
 
 # SUBJECT PATHING
 LOGFILEPATH = 'eyetrackingData/' #set path for eyetracking data
+print(LOGFILEPATH)
 LOGFILENAME = LOGFILEPATH #initialize file name
 LOGFILE = LOGFILENAME # .txt; adding path before logfilename is optional; logs responses (NOT eye movements, these are stored in an EDF file!)
 
