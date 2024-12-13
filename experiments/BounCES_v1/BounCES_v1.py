@@ -185,17 +185,19 @@ class ExpPresentation(Exp):
 		familiarizationTrialPath = 'orders/familiarizationTrialOrders/BounCES_Order' + self.experiment.subjVariables['order'] +".csv"
 		activeTrainingTrialPath = 'orders/activeTrainingOrders/BounCES_ActiveTrainingOrder' + self.experiment.subjVariables['order'] +".csv"
 		activeTestTrialPath = 'orders/activeOrders/BounCES_ActiveOrder' + self.experiment.subjVariables['order'] +".csv"
+		lwlTrialPath = 'orders/lwlOrders/BounCES_LWLOrder' + self.experiment.subjVariables['order'] +".csv"
 
 		(self.familTrialListMatrix, self.trialFieldNames) = importTrials(familiarizationTrialPath, method="sequential")
 		(self.activeTrainingTrialsMatrix, self.activeTrainingTrialFieldNames) = importTrials(activeTrainingTrialPath, method="sequential")
 		(self.activeTestTrialsMatrix, self.activeTrialFieldNames) = importTrials(activeTestTrialPath, method="sequential")
+		(self.lwlTestTrialsMatrix, self.lwlTrialFieldNames) = importTrials(lwlTrialPath, method="sequential")
 
 		self.movieMatrix = loadFilesMovie(self.experiment.moviePath, ['mp4', 'mov'], 'movie', self.experiment.win)
 		self.AGmovieMatrix = loadFilesMovie(self.experiment.AGPath, ['mp4'], 'movie', self.experiment.win)
 		self.soundMatrix = loadFiles(self.experiment.soundPath, ['.mp3', '.wav'], 'sound')
 		self.AGsoundMatrix = loadFiles(self.experiment.AGPath, ['.mp3', '.wav'], 'sound')
 		#self.activeSoundMatrix = loadFiles(self.experiment.activeSoundPath, ['.mp3'], 'sound')
-		self.imageMatrix = loadFiles(self.experiment.imagePath, ['.png', ".jpg"], 'image', win = self.experiment.win)
+		self.imageMatrix = loadFiles(self.experiment.imagePath, ['.png', ".jpg", ".jpeg"], 'image', win = self.experiment.win)
 		self.stars = loadFiles(self.experiment.AGPath, ['.jpg'], 'image', self.experiment.win)
 
 		self.locations = ['left', 'right']
@@ -207,7 +209,7 @@ class ExpPresentation(Exp):
 		self.y_length = constants.DISPSIZE[1]
 		print(self.x_length, self.y_length)
 
-		self.pos = {'bottomLeft': (-256, 0), 'bottomRight': (256, 0),
+		self.pos = {'bottomLeft': (-self.x_length/4, 0), 'bottomRight': (self.x_length/4, 0),
 					'centerLeft': (-480, 0), 'centerRight': (480, 0),
 					'topLeft': (-self.x_length/4, self.y_length/4),
 					'topRight': (self.x_length/4, self.y_length/4),
@@ -282,6 +284,20 @@ class ExpPresentation(Exp):
 				if curTrial['trialType'] == 'activeTraining':
 					self.presentActiveTrial(curTrial, curActiveTrainingIndex, self.activeTrainingTrialFieldNames, "activeTraining")
 					curActiveTrainingIndex += 1
+
+		elif whichPart == "lwlTest":
+			curlwlTestIndex = 1
+			for curTrial in self.lwlTestTrialsMatrix.trialList:
+				print(curTrial)
+				if curTrial['trialType'] == 'AG':
+					self.presentAGTrial(curTrial, self.lwlTestTrialFieldNames ,getInput = "no", duration = curTrial['AGTime'])
+					self.experiment.win.flip()
+				if curTrial['trialType'] == 'test':
+					self.presentLWLTrial(curTrial, curlwlTestIndex, self.lwlTrialFieldNames,  
+						  curTrial['trialStartSilence'],
+						   curTrial['trialAudioDuration'], 
+						   curTrial['trialEndSilence'],"LWLTest")
+					curlwlTestIndex += 1
 
 		elif whichPart == "activeTest":
 			curActiveTestIndex = 1
@@ -829,6 +845,58 @@ class ExpPresentation(Exp):
 			self.experiment.tracker.log("stopScreen")
 			self.experiment.tracker.stop_recording()
 
+	def presentLWLTrial(self, curTrial, culwlTestIndex, trialFieldNames, 
+					 trialStartSilence, trialAudioDuration, trialEndSilence, stage):
+		print("start LWL")
+		self.experiment.disp.show()
+		libtime.pause(self.ISI + random.choice([0, 100, 200]))
+
+		print(curTrial)
+		#if self.experiment.subjVariables['eyetracker'] == "yes":
+	#		self.experiment.tracker.start_recording()
+	#		logData = "Experiment %s subjCode %s trialOrder %s" % (
+	#			self.experiment.expName, self.experiment.subjVariables['subjCode'],
+	#			self.experiment.subjVariables['order'])
+#
+#			for field in self.trialFieldNames:
+#				logData += " "+field+" "+str(curTrial[field])
+			#print("would have logged " + logData)
+#			self.experiment.tracker.log(logData)
+		
+		curTargetLocation = curTrial['TargetObjectPos']
+		curTargetTrialCoordinates = self.pos[curTargetLocation]
+		curDistracterLocation = curTrial['DistracterObjectPos']
+		curDistracterTrialCoordinates = self.pos[curDistracterLocation]
+		curTargetPic = self.imageMatrix[curTrial['TargetImage']][0]  # psychopy image stimulus
+		curDistracterPic = self.imageMatrix[curTrial['DistracterImage']][0]  # psychopy image stimulus
+		curTargetPic.pos = curTargetTrialCoordinates
+		curDistracterPic.pos = curDistracterTrialCoordinates
+		testScreen = libscreen.Screen()
+		buildScreenPsychoPy(testScreen, [curTargetPic, curDistracterPic])
+
+		trialTimerStart = libtime.get_time()
+		setAndPresentScreen(self.experiment.disp, testScreen)
+
+		if self.experiment.subjVariables['eyetracker'] == "yes":
+            # log event
+			self.experiment.tracker.log("testScreen")
+		
+		libtime.pause(trialStartSilence)
+
+		playAndWait(self.soundMatrix[curTrial['Audio']], waitFor=0)
+		if self.experiment.subjVariables['eyetracker'] == "yes":
+            # log event
+			self.experiment.tracker.log("audioOnset")
+
+		libtime.pause(trialAudioDuration)
+		if self.experiment.subjVariables['eyetracker'] == "yes":
+			self.experiment.tracker.log("audioOffset")
+        # silence at end of trial
+
+		libtime.pause(trialEndSilence)
+		self.experiment.disp.fill()
+	
+		pass
 
 	def EndDisp(self):
 		# show the screen with no stars filled in
@@ -924,6 +992,7 @@ currentPresentation = ExpPresentation(currentExp)
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
 currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+currentPresentation.cycleThroughTrials(whichPart= "lwlTest")
 currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
 currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
