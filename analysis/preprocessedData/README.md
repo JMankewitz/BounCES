@@ -1,0 +1,1 @@
+This `preprocessedData` subdirectory holds all the data after first-pass preprocessessing (downsampling and interpolation), but before any by-participant exclusions or additional data cleaning/merging. 
