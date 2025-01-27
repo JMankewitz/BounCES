@@ -221,11 +221,11 @@ class ExpPresentation(Exp):
 					}
 
 		# Contingent Timing Settings
-		self.firstTriggerThreshold = 250  # (ms) time to accumulate looks before triggering image
-		self.awayThreshold = 300  # (ms) time of NA/away looks for contingent ends - should account for blinks. Lower is more sensitive, higher is more forgiving.
-		self.noneThreshold = 250  # (ms) time of look to on-screen but non-trigger AOI before contingent ends - should account for shifts
+		self.firstTriggerThreshold = 150  # (ms) time to accumulate looks before triggering image
+		self.awayThreshold = 250  # (ms) time of NA/away looks for contingent ends - should account for blinks. Lower is more sensitive, higher is more forgiving.
+		self.noneThreshold = 1  # (ms) time of look to on-screen but non-trigger AOI before contingent ends - should account for shifts
 
-		self.timeoutTime = 15000  # (ms) 30s, length of trial
+		self.timeoutTime = 10000  # (ms) 30s, length of trial
 		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 190), size = (800, 700))
 		self.aoiRight = aoi.AOI('rectangle', pos= (1120, 190), size=(800, 700))
 		self.ISI = 1000
@@ -234,7 +234,7 @@ class ExpPresentation(Exp):
 
 		# sampling threshold - when the gaze will trigger (20 samples = 333.333 ms)
 		self.lookAwayPos = (-1,-1)
-		self.maxLabelTime = 15000 # (ms) Maximum length of time each image can be sampled before the screen resets.
+		self.maxLabelTime = 10000 # (ms) Maximum length of time each image can be sampled before the screen resets.
 
 		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)
 
@@ -290,7 +290,7 @@ class ExpPresentation(Exp):
 			for curTrial in self.lwlTestTrialsMatrix.trialList:
 				print(curTrial)
 				if curTrial['trialType'] == 'AG':
-					self.presentAGTrial(curTrial, self.lwlTestTrialFieldNames ,getInput = "no", duration = curTrial['AGTime'])
+					self.presentAGTrial(curTrial, self.lwlTrialFieldNames ,getInput = "no", duration = curTrial['AGTime'])
 					self.experiment.win.flip()
 				if curTrial['trialType'] == 'test':
 					self.presentLWLTrial(curTrial, curlwlTestIndex, self.lwlTrialFieldNames,  
@@ -852,16 +852,16 @@ class ExpPresentation(Exp):
 		libtime.pause(self.ISI + random.choice([0, 100, 200]))
 
 		print(curTrial)
-		#if self.experiment.subjVariables['eyetracker'] == "yes":
-	#		self.experiment.tracker.start_recording()
-	#		logData = "Experiment %s subjCode %s trialOrder %s" % (
-	#			self.experiment.expName, self.experiment.subjVariables['subjCode'],
-	#			self.experiment.subjVariables['order'])
-#
-#			for field in self.trialFieldNames:
-#				logData += " "+field+" "+str(curTrial[field])
-			#print("would have logged " + logData)
-#			self.experiment.tracker.log(logData)
+		if self.experiment.subjVariables['eyetracker'] == "yes":
+			self.experiment.tracker.start_recording()
+			logData = "Experiment %s subjCode %s trialOrder %s" % (
+				self.experiment.expName, self.experiment.subjVariables['subjCode'],
+				self.experiment.subjVariables['order'])
+
+			for field in trialFieldNames:
+				logData += " "+field+" "+str(curTrial[field])
+			print("would have logged " + logData)
+			self.experiment.tracker.log(logData)
 		
 		curTargetLocation = curTrial['TargetObjectPos']
 		curTargetTrialCoordinates = self.pos[curTargetLocation]
