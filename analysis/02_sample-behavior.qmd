@@ -1,0 +1,73 @@
+---
+title: "02b_sample-behavior"
+format: html
+editor: visual
+---
+
+## Sample Duration
+
+```{r}
+library(here)
+library(tidyverse)
+
+read_file_path <- here("analysis/preprocessedData/eyetrackingData/pilot_v1")
+
+d_active_test <- read_csv(here(read_file_path, "full_active_test_aois.csv"))
+subj_info <- read_csv(here("analysis/subject_info.csv"))
+image_path <- "images/pilot_1"
+```
+
+```{r}
+
+final_d_active_test <- d_active_test %>% 
+  left_join(subj_info) %>% 
+  filter(subjCode %in% c("BOP004", "BOP005","BOP006", "BOP009", "BOP011", "BOP017", "BOP018", "BOP019", "BOP020","BOP021", "Prac_1539_5", "Prac_1542")) %>% 
+  mutate(condAOI = case_when(LookAOI == "left" ~ leftStimType,
+                             LookAOI == "right" ~ rightStimType,
+                             TRUE ~ LookAOI)) 
+
+sample_duration_by_subj <- final_d_active_test |> 
+  filter(TimeBinMs > 0, TimeBinMs < 15000) |> # restrict to analysis window
+  filter(!is.na(condAOI) & condAOI != "other") |>  #only valid looks
+  group_by(subjCode, age_bin, condAOI, trialID) |> 
+  summarize(n_frames = n()) |> 
+  mutate(total_time_ms = n_frames*16.6667,
+         total_time_s = total_time_ms/1000)
+
+sample_duration_across_subj <- 
+  sample_duration_by_subj |> group_by(condAOI) |> 
+  summarize(mean_duration = mean(total_time_s),
+         sd_duration = sd(total_time_s))
+
+sample_duration_bar_across_trial <- sample_duration_across_subj |> 
+  ggplot(aes(x = condAOI, y = mean_duration, fill = condAOI)) + 
+  geom_bar(stat = "identity") + #facet_wrap(~trialIDfactor) + 
+  geom_point(data = sample_duration_by_subj, aes(x = condAOI, y = total_time_s), alpha = .3) + 
+  theme_minimal() + 
+  scale_fill_manual(values = c("boundary"="#3a86ff",
+                                "prototype"="#ff006e")) + 
+  labs(x = "Sampled Object", 
+       y = "Total Sample Time (s)",
+       title = "Time Sampled per Object",
+       subtitle = "Collapsed Across Trial") + 
+  theme(legend.position = "none") + facet_wrap(~age_bin)
+
+sample_duration_bar_across_trial
+
+sample_duration_bar <- sample_duration_by_subj |> 
+  ggplot(aes(x = condAOI, y = total_time_s, fill = condAOI)) + 
+  geom_bar(stat = "summary") + 
+  geom_line(data = sample_duration_by_subj, aes(x = condAOI, y = total_time_s, group = trialID), alpha = .3) + 
+  geom_point(data = sample_duration_by_subj, aes(x = condAOI, y = total_time_s), alpha = .3) + 
+      #geom_line(aes(group = subjCode), alpha = .3) +
+  theme_minimal() + 
+  scale_fill_manual(values = c("boundary"="#3a86ff",
+                                "prototype"="#ff006e")) + 
+  labs(x = "Sampled Object", 
+       y = "Total Sample Time (s)",
+       title = "Time Sampled per Object") + 
+  theme(legend.position = "none") + ylim(0, 15) + 
+  facet_wrap(~subjCode)
+
+sample_duration_bar
+```
