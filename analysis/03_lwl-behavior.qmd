@@ -1,0 +1,18 @@
+
+# Demonstration of Learning
+
+```{r}
+library(here)
+library(tidyverse)
+
+read_file_path <- here("analysis/preprocessedData/eyetrackingData/pilot_v2")
+
+d_lwl_test <- read_csv(here(read_file_path, "full_lwl_aois.csv"))
+subj_info <- read_csv(here("analysis/subject_info.csv"))
+image_path <- "images/pilot_2"
+```
+
+```{r}
+d_lwl_test
+```
+
