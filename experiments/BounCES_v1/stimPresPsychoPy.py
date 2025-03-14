@@ -248,9 +248,11 @@ def giveFeedback(isRight):
 
 class LoomAnimation:
     """
-    Animation class that handles the looming, jiggling, and fade-back phases
-    of shape animations for the BounCES experiment.
-
+    Animation class that handles three phases of animation:
+    1. Loom in (grow larger)
+    2. Wiggle at large size
+    3. Loom out (shrink back to original)
+    
     Parameters:
     -----------
     stim : psychopy.visual.ImageStim
@@ -267,8 +269,12 @@ class LoomAnimation:
         Initial opacity of the stimulus (default: 1.0)
     target_opacity : float
         Target opacity for looming phase (default: 1.0)
-    loom_duration : float
-        Duration of the looming phase in seconds (default: 1.0)
+    loom_in_duration : float
+        Duration of the loom in (growing) phase in seconds (default: 1.0)
+    wiggle_duration : float
+        Duration of the wiggling phase in seconds (default: 2.0)
+    loom_out_duration : float
+        Duration of the loom out (shrinking) phase in seconds (default: 1.0)
     jiggle_amplitude : float
         Maximum rotation angle in degrees (default: 5)
     jiggle_frequency : float
@@ -277,15 +283,16 @@ class LoomAnimation:
         Whether to loop the animation continuously (default: False)
     """
     # Define explicit states
-    LOOMING_OUT = "looming_out"
-    LOOMING_IN = "looming_in"
+    LOOMING_IN = "looming_in"     # Growing larger
+    WIGGLING = "wiggling"         # Wiggling at large size
+    LOOMING_OUT = "looming_out"   # Shrinking back
     COMPLETE = "complete"
     PAUSED = "paused"
 
     def __init__(self, stim, win, pos=None, 
                  init_size=None, target_size_factor=1.5,
                  init_opacity=1.0, target_opacity=1.0,
-                 loom_duration=1.0, 
+                 loom_in_duration=1.0, wiggle_duration=2.0, loom_out_duration=1.0,
                  jiggle_amplitude=5, jiggle_frequency=2,
                  looping=False):
 
@@ -312,7 +319,9 @@ class LoomAnimation:
         # Other animation parameters
         self.init_opacity = init_opacity
         self.target_opacity = target_opacity
-        self.loom_duration = loom_duration
+        self.loom_in_duration = loom_in_duration
+        self.wiggle_duration = wiggle_duration
+        self.loom_out_duration = loom_out_duration
         self.jiggle_amplitude = jiggle_amplitude
         self.jiggle_frequency = jiggle_frequency
 
@@ -324,9 +333,10 @@ class LoomAnimation:
         # Animation state variables
         from psychopy import core
         self.start_time = core.getTime()
+        self.phase_start_time = self.start_time
         self.elapsed_time = 0
         self.paused_time = 0
-        self.state = self.LOOMING_OUT
+        self.state = self.LOOMING_IN  # Start with growing phase
         self.current_size = self.init_size
         self.current_opacity = self.init_opacity
         self.current_angle = 0
@@ -365,17 +375,17 @@ class LoomAnimation:
         # Calculate elapsed time accounting for pauses
         if self.paused_time > 0:
             # Adjust start time to account for the pause
-            self.start_time += self.paused_time
+            self.phase_start_time += self.paused_time
             self.paused_time = 0
             
-        elapsed = current_time - self.start_time
+        elapsed = current_time - self.phase_start_time
         self.elapsed_time = elapsed
 
-        # Looming out phase (growing)
-        if self.state == self.LOOMING_OUT:
-            progress = min(1.0, elapsed / (self.loom_duration / 2))
+        # PHASE 1: Looming in (growing larger)
+        if self.state == self.LOOMING_IN:
+            progress = min(1.0, elapsed / self.loom_in_duration)
             
-            # Calculate size interpolation
+            # Calculate size interpolation (growing)
             self.current_size = (
                 self.init_size[0] + progress * (self.target_size[0] - self.init_size[0]),
                 self.init_size[1] + progress * (self.target_size[1] - self.init_size[1])
@@ -384,35 +394,50 @@ class LoomAnimation:
             # Calculate opacity interpolation
             self.current_opacity = self.init_opacity + progress * (self.target_opacity - self.init_opacity)
             
-            # Calculate jiggle
-            self.current_angle = self.jiggle_amplitude * math.sin(2 * math.pi * self.jiggle_frequency * elapsed)
+            # Calculate jiggle (start subtle)
+            self.current_angle = (progress * self.jiggle_amplitude) * math.sin(2 * math.pi * self.jiggle_frequency * elapsed)
             
             # Apply to stimulus
             self.stim.size = self.current_size
             self.stim.opacity = self.current_opacity
             self.stim.ori = self.current_angle
             
-            # Transition to looming in when complete
+            # Transition to wiggling phase when complete
             if progress >= 1.0:
-                self.state = self.LOOMING_IN
-                self.start_time = current_time
+                self.state = self.WIGGLING
+                self.phase_start_time = current_time
                 
-        # Looming in phase (shrinking back)
-        elif self.state == self.LOOMING_IN:
-            progress = min(1.0, elapsed / (self.loom_duration / 2))
+        # PHASE 2: Wiggling (maintain large size with jiggle)
+        elif self.state == self.WIGGLING:
+            progress = min(1.0, elapsed / self.wiggle_duration)
             
-            # Calculate size interpolation (reverse)
+            # Maintain the target size
+            self.stim.size = self.target_size
+            
+            # Full jiggle at target size
+            self.current_angle = self.jiggle_amplitude * math.sin(2 * math.pi * self.jiggle_frequency * elapsed)
+            self.stim.ori = self.current_angle
+            
+            # Transition to looming out when wiggle phase complete
+            if progress >= 1.0:
+                self.state = self.LOOMING_OUT
+                self.phase_start_time = current_time
+                
+        # PHASE 3: Looming out (shrinking back)
+        elif self.state == self.LOOMING_OUT:
+            progress = min(1.0, elapsed / self.loom_out_duration)
+            
+            # Calculate size interpolation (shrinking)
             self.current_size = (
                 self.target_size[0] - progress * (self.target_size[0] - self.init_size[0]),
                 self.target_size[1] - progress * (self.target_size[1] - self.init_size[1])
             )
             
-            # Calculate opacity interpolation (reverse)
+            # Calculate opacity interpolation (if changing)
             self.current_opacity = self.target_opacity - progress * (self.target_opacity - self.init_opacity)
             
-            # Calculate jiggle (continue from last position)
-            self.current_angle = self.jiggle_amplitude * math.sin(2 * math.pi * self.jiggle_frequency * 
-                                                               (elapsed + self.loom_duration/2))
+            # Calculate jiggle (reducing as we shrink)
+            self.current_angle = ((1.0 - progress) * self.jiggle_amplitude) * math.sin(2 * math.pi * self.jiggle_frequency * elapsed)
             
             # Apply to stimulus
             self.stim.size = self.current_size
@@ -425,8 +450,8 @@ class LoomAnimation:
                 
                 # If looping is enabled, restart the animation
                 if self.looping:
-                    self.state = self.LOOMING_OUT
-                    self.start_time = current_time
+                    self.state = self.LOOMING_IN
+                    self.phase_start_time = current_time
                     return False  # Not complete, will continue looping
                 else:
                     # Not looping, so mark as complete and reset
@@ -463,7 +488,8 @@ class LoomAnimation:
         """Restart the animation from the beginning"""
         from psychopy import core
         self.start_time = core.getTime()
-        self.state = self.LOOMING_OUT
+        self.phase_start_time = self.start_time
+        self.state = self.LOOMING_IN
         self.is_paused = False
         self.paused_time = 0
         # Reset the stimulus to its initial state

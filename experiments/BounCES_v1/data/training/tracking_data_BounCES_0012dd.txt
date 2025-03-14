@@ -1,2 +1,0 @@
-BounCES_0012dd	keyboard	m	22	1	jjm	1	3	yes	input	training	2	1	B2	B4	bosas_look1cool1	B2_B4	8000.0	None	None	None	None	None	None	None	None	None	None	None	2	22031.8341999955	31215.327699988848	9183.493499993347
-BounCES_0012dd	keyboard	m	22	1	jjm	1	3	yes	input	training	3	1	C2	C4	rengs_wow1those1	C2_C4	8000.0	None	None	None	None	None	None	None	None	None	None	None	3	37128.26669999049	46311.38589998591	9183.119199995417

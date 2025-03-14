@@ -1,3 +1,3 @@
 @echo on
 
-C:\AnacondaEnvs\bounces_py310\python.exe BounCES_v1.py
+C:\AnacondaEnvs\BounCES_admin_310\python.exe BounCES_v2.py

@@ -239,9 +239,10 @@ class ExpPresentation(Exp):
 		self.maxLabelTime = 10000 # (ms) Maximum length of time each image can be sampled before the screen resets.
 
         # Animation settings for looming
-		self.loomDuration = 4.0  # seconds for full loom cycle
+		self.loomDuration = 1  # seconds for full loom cycle
 		self.jiggleAmplitude = 5  # degrees
 		self.jiggleFrequency = 1  # Hz
+		self.wiggleDuration = 2.0 #s
 		self.targetSizeFactor = 1.25  # Grow to 150% of original size
 
 		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)
@@ -463,7 +464,9 @@ class ExpPresentation(Exp):
 			win=self.experiment.win,
 			init_size=leftImage.size,
 			target_size_factor=self.targetSizeFactor,
-			loom_duration=self.loomDuration,
+			loom_in_duration=self.loomDuration,
+			loom_out_duration=self.loomDuration,
+			wiggle_duration=self.wiggleDuration,
 			jiggle_amplitude=self.jiggleAmplitude,
 			jiggle_frequency=self.jiggleFrequency,
 			looping= True
@@ -472,9 +475,11 @@ class ExpPresentation(Exp):
 		rightAnimation = LoomAnimation(
 			stim=rightImage,
 			win=self.experiment.win,
-			init_size=rightImage.size,
+			init_size=leftImage.size,
 			target_size_factor=self.targetSizeFactor,
-			loom_duration=self.loomDuration,
+			loom_in_duration=self.loomDuration,
+			loom_out_duration=self.loomDuration,
+			wiggle_duration=self.wiggleDuration,
 			jiggle_amplitude=self.jiggleAmplitude,
 			jiggle_frequency=self.jiggleFrequency,
 			looping= True
@@ -605,20 +610,24 @@ class ExpPresentation(Exp):
 			win=self.experiment.win,
 			init_size=self.leftStimImage.size,
 			target_size_factor=self.targetSizeFactor,
-			loom_duration=self.loomDuration,
+			loom_in_duration=self.loomDuration,
+			loom_out_duration=self.loomDuration,
+			wiggle_duration=self.wiggleDuration,
 			jiggle_amplitude=self.jiggleAmplitude,
 			jiggle_frequency=self.jiggleFrequency,
-			looping=True  # Enable looping for continuous animation
+			looping= True  # Enable looping for continuous animation
 		)
 		rightAnimation = LoomAnimation(
 			stim=self.rightStimImage,
 			win=self.experiment.win,
 			init_size=self.rightStimImage.size,
 			target_size_factor=self.targetSizeFactor,
-			loom_duration=self.loomDuration,
+			loom_in_duration=self.loomDuration,
+			loom_out_duration=self.loomDuration,
+			wiggle_duration=self.wiggleDuration,
 			jiggle_amplitude=self.jiggleAmplitude,
 			jiggle_frequency=self.jiggleFrequency,
-			looping=True  # Enable looping for continuous animation
+			looping= True   # Enable looping for continuous animation
 		)
 
 		# pause for non-contingent frozen display
@@ -634,7 +643,7 @@ class ExpPresentation(Exp):
 		activefamstartright = libtime.get_time()
 		while libtime.get_time() - activefamstartright < self.activefamtimeoutTime:
 			self.rightRect.draw()
-			self.rightStimImage.draw()
+			self.rightStimImage.draw() 
 			self.experiment.win.flip()
 
 		libtime.pause(500)
@@ -974,7 +983,7 @@ class ExpPresentation(Exp):
 					 trialStartSilence, trialAudioDuration, trialEndSilence, stage):
 		print("start LWL")
 		self.experiment.disp.show()
-		#libtime.pause(self.ISI + random.choice([0, 100, 200]))
+		libtime.pause(self.ISI + random.choice([0, 100, 200]))
 
 		print(curTrial)
 		if self.experiment.subjVariables['eyetracker'] == "yes":
@@ -1138,6 +1147,6 @@ currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
 currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
 currentPresentation.cycleThroughTrials(whichPart= "lwlTest")
-#currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
+currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
 currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
