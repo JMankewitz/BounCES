@@ -32,7 +32,7 @@ source(here("analysis/functions/Pygaze_InterpolateAOIHits.R"))
 eyetracking_data_path <- here("experiments/BounCES_v1/eyetrackingData")
 handcoding_data_path <- here("analysis/preprocessedData/handcodedData")
 
-write_file_location <- here("analysis/preprocessedData/eyetrackingData/pilot_v1")
+write_file_location <- here("analysis/preprocessedData/eyetrackingData/pilot_v2")
 
 subj_data <- here("analysis/preprocessedData/subjData/subject_data.xlsx")
 ```
@@ -45,10 +45,10 @@ subj_data <- here("analysis/preprocessedData/subjData/subject_data.xlsx")
 fullGazeDataNames <- list.files(path = eyetracking_data_path, pattern = ".tsv",
                       full.names = TRUE, recursive = TRUE)
 
-gazeDataNames_pilot <- fullGazeDataNames[grepl("pilot_v1", fullGazeDataNames)]
-gazeDataNames_prac <- fullGazeDataNames[grepl("prac", fullGazeDataNames)]
+gazeDataNames_pilot <- fullGazeDataNames[grepl("pilot_v2", fullGazeDataNames)]
+#gazeDataNames_prac <- fullGazeDataNames[grepl("prac", fullGazeDataNames)]
 
-d_full_raw <- do.call(dplyr::bind_rows, lapply(fullGazeDataNames, integrateEventData))
+d_full_raw <- do.call(dplyr::bind_rows, lapply(gazeDataNames_pilot, integrateEventData))
 ```
 
 ## Check Gaze Quality
@@ -95,6 +95,10 @@ d_training_gaze <- d_full_xy |>
 
 d_active_test_gaze <- d_full_xy |> 
   filter(trialType == "activeTest") |> 
+  janitor::remove_empty("cols")
+
+d_lwl_test_gaze <- d_full_xy |> 
+  filter(trialType == "test") |> 
   janitor::remove_empty("cols")
 ```
 
@@ -158,6 +162,16 @@ d_passive_training_trials <- d_training_gaze |>
 d_training_gaze <- d_training_gaze |> 
   left_join(d_passive_training_trials) |> 
   select(-c(trial_number:trialDuration))
+```
+
+```{r}
+d_lwl_trials <- d_lwl_test_gaze |> select(trial_number:trialAudioDuration) |> 
+  unique() |> 
+  mutate(trial_type_id = seq(1:n()))
+
+d_lwl_gaze <- d_lwl_test_gaze |> 
+  left_join(d_lwl_trials) |> 
+  select(-c(trial_number:trialAudioDuration))
 ```
 
 ## Assign AOIs
@@ -267,9 +281,52 @@ d_active_test_aoi <- d_active_test_gaze |>
                          LookAOI != "to_fill" ~ LookAOI, 
                          TRUE ~ NA))|> 
   select(-c(GazePointXLeft:TimeStamp_num))
+
 ```
 
-## Regularize TimeBins
+##### LWL Test
+
+AOIS
+
+```{r}
+#TODO
+```
+
+Check Validity
+
+```{r}
+d_lwl_gaze |> 
+  ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subjCode))) +
+  geom_point(alpha = .05) +
+annotate("rect", xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max, 
+                   fill=NA, color="black", size=0.5) +
+  annotate("rect", xmin=left_stim_aoi[[1]][[1]], xmax=left_stim_aoi[[1]][[2]], 
+                ymin=left_stim_aoi[[2]][[1]], ymax=left_stim_aoi[[2]][[2]], 
+            color = "black", size = .5, fill = NA) +
+  annotate("rect", xmin=right_stim_aoi[[1]][[1]], xmax=right_stim_aoi[[1]][[2]], 
+                ymin=right_stim_aoi[[2]][[1]], ymax=right_stim_aoi[[2]][[2]], 
+            color = "black",fill=NA) +
+  theme_classic() + 
+  guides(color = guide_legend(override.aes = list(alpha = 1))) +
+  facet_wrap(~subjCode)
+```
+
+Assign AOIs
+
+```{r}
+d_lwl_aoi <- d_lwl_gaze |> 
+  mutate(LookAOI = NA) |> 
+  assignAOI(left_stim_aoi, "left") |> 
+  assignAOI(right_stim_aoi, "right") |> 
+  mutate(LookAOI = case_when(LookAOI == "to_fill" & isLook==1 ~ "off",
+                         LookAOI != "to_fill" ~ LookAOI, 
+                         TRUE ~ NA))|> 
+  select(-c(GazePointXLeft:TimeStamp_num))
+```
+
+## Preprocess Active Test
+
+### Regularize TimeBins
 
 ```{r}
 d_active_test_aoi_binned <- d_active_test_aoi |>  
@@ -286,7 +343,7 @@ d_active_test_event_timepoints <- d_active_test_aoi_binned |>
   summarize(Events = paste0(sort(unique(Event)), collapse = "_"))
 ```
 
-## Interpolate Gaps
+### Interpolate Gaps
 
 ```{r}
 d_final_active_test_aoi <- 
@@ -314,8 +371,55 @@ d_final_active_test_aoi %>%
                                 "prototype"="#ff006e"))
 ```
 
-# Save Data
+### Save Data
 
 ```{r}
 d_final_active_test_aoi %>% write_csv(file = here(write_file_location, "full_active_test_aois.csv"))
+```
+
+## Preprocess LWL
+
+```{r}
+d_lwl_aoi_binned <- d_lwl_aoi |>  
+  normalizeTimeMS() |> 
+  group_by(subjCode, trial_type_id) |> 
+  group_modify(~rezeroTrials(.x, eventname = "audioOnset")) |> 
+  group_modify((~createTimeBins(.x, ms_per_frame=1000/60)))
+
+# Save messaging by timepoint
+
+d_lwl_event_timepoints <- d_lwl_aoi_binned |> 
+  filter(Event != "" & !is.na(Event)) |> 
+  group_by(subjCode, trial_type_id, TimeBin, TimeBinMs) |> 
+  summarize(Events = paste0(sort(unique(Event)), collapse = "_"))
+```
+
+```{r}
+d_final_lwl_aoi <- 
+  d_lwl_aoi_binned |> 
+  group_by(subjCode, trial_type_id, TimeBin, TimeBinMs, Event) |> 
+  slice_head(n = 1) %>% 
+  InterpolateMissingAOI() %>% 
+  ungroup() %>% 
+  left_join(d_lwl_trials)
+```
+
+```{r}
+d_final_lwl_aoi %>% 
+  mutate(AOICond = case_when((LookAOI == "left" & TargetObjectPos == "bottomLeft") ~ "target",
+                             (LookAOI == "right" & TargetObjectPos == "bottomRight") ~ "target",
+                             (LookAOI == "left" & DistracterObjectPos == "bottomLeft") ~ "distractor",
+                             (LookAOI == "right" & DistracterObjectPos == "bottomRight") ~ "distractor",
+                             TRUE ~ LookAOI)) %>% 
+  ggplot(aes(x = TimeBinMs, y = AOICond, color = AOICond)) +
+  geom_point(alpha = .05) + 
+  geom_vline(xintercept=0) + 
+  facet_grid(cols = vars(trialID),
+             rows = vars(subjCode)) + 
+  theme_minimal() + 
+  theme(strip.text.y = element_text(angle = 0))
+```
+
+```{r}
+d_final_lwl_aoi %>% write_csv(file = here(write_file_location, "full_lwl_aois.csv"))
 ```
