@@ -7,7 +7,7 @@ print(LOGFILEPATH)
 LOGFILENAME = LOGFILEPATH #initialize file name
 LOGFILE = LOGFILENAME # .txt; adding path before logfilename is optional; logs responses (NOT eye movements, these are stored in an EDF file!)
 
-DUMMYMODE = True # False for gaze contingent display, True for dummy mode (using mouse or joystick)
+DUMMYMODE = False # False for gaze contingent display, True for dummy mode (using mouse or joystick)
 
 # DISPLAY
 # used in libscreen, for the *_display functions. The values may be adjusted,
@@ -47,7 +47,7 @@ JOYTIMEOUT = None # None for no timeout, or a value in milliseconds
 # EYETRACKER
 # general
 #TRACKERTYPE = 'dummy' # either 'smi', 'eyelink' or 'dummy' (NB: if DUMMYMODE is True, trackertype will be set to dummy automatically)
-TRACKERTYPE = 'dummy'
+TRACKERTYPE = 'tobii'
 SACCVELTHRESH = 35 # degrees per second, saccade velocity threshold
 SACCACCTHRESH = 9500 # degrees per second, saccade acceleration threshold
 EVENTDETECTION = 'native'
