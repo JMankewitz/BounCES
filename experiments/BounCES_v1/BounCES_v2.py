@@ -209,7 +209,8 @@ class ExpPresentation(Exp):
 		self.y_length = constants.DISPSIZE[1]
 		print(self.x_length, self.y_length)
 
-		self.pos = {'bottomLeft': (-self.x_length/4, 0), 'bottomRight': (self.x_length/4, 0),
+		self.pos = {'bottomLeft': (-self.x_length/4, -self.y_length/4), 
+			  'bottomRight': (self.x_length/4, -self.y_length/4),
 					'centerLeft': (-480, 0), 'centerRight': (480, 0),
 					'topLeft': (-self.x_length/4, self.y_length/4),
 					'topRight': (self.x_length/4, self.y_length/4),
@@ -227,6 +228,8 @@ class ExpPresentation(Exp):
 
 		self.timeoutTime = 10000  # (ms) 30s, length of trial
 		self.rect_size = (800, 700)
+		self.fam_rect_size = (600, 500)
+		self.fam_stim_size = (400, 400)
 		self.stim_size = (500,500)
 		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 190), size = self.rect_size)
 		self.aoiRight = aoi.AOI('rectangle', pos= (1120, 190), size=self.rect_size)
@@ -429,40 +432,104 @@ class ExpPresentation(Exp):
 
 		# set image sizes
 
-		leftImageName = curTrial['leftImage']
-		rightImageName = curTrial['rightImage']
+		topLeftImageName = curTrial['topLeftImage']
+		topRightImageName = curTrial['topRightImage']
+		bottomRightImageName = curTrial['bottomRightImage']
+		bottomLeftImageName = curTrial['bottomLeftImage']
 
-		rightImage = self.imageMatrix[rightImageName][0]
-		leftImage = self.imageMatrix[leftImageName][0]
+		topRightImage = self.imageMatrix[topRightImageName][0]
+		topLeftImage = self.imageMatrix[topLeftImageName][0]
+		bottomRightImage = self.imageMatrix[bottomRightImageName][0]
+		bottomLeftImage = self.imageMatrix[bottomLeftImageName][0]
 
-		leftImage.pos = self.pos['centerLeft']
-		rightImage.pos = self.pos['centerRight']
-		leftImage.size = self.stim_size
-		rightImage.size = self.stim_size
+		topRightImage.pos = self.pos['topRight']
+		topLeftImage.pos = self.pos['topLeft']
+		bottomRightImage.pos = self.pos['bottomRight']
+		bottomLeftImage.pos = self.pos['bottomLeft']
 
-		leftRect = visual.Rect(
+		topRightImage.size = self.fam_stim_size
+		topLeftImage.size = self.fam_stim_size
+		bottomRightImage.size = self.fam_stim_size
+		bottomLeftImage.size = self.fam_stim_size
+
+		topRightRect = visual.Rect(
 						self.experiment.win,
-						width=600, height=600,
+						width=self.fam_rect_size[0], height=self.fam_rect_size[1],
 						fillColor="lightgray", lineColor=None,
-						pos=self.pos['centerLeft'])
+						pos=self.pos['topRight'])
 		
-		rightRect = visual.Rect(
+		topLeftRect = visual.Rect(
 						self.experiment.win,
-						width=600, height=600,
+						width=self.fam_rect_size[0], height=self.fam_rect_size[1],
 						fillColor="lightgray", lineColor=None,
-						pos=self.pos['centerRight'])
+						pos=self.pos['topLeft'])
+		
+		bottomRightRect = visual.Rect(
+						self.experiment.win,
+						width=self.fam_rect_size[0], height=self.fam_rect_size[1],
+						fillColor="lightgray", lineColor=None,
+						pos=self.pos['bottomLeft'])
+		bottomLeftRect = visual.Rect(
+						self.experiment.win,
+						width=self.fam_rect_size[0], height=self.fam_rect_size[1],
+						fillColor="lightgray", lineColor=None,
+						pos=self.pos['bottomRight'])
 
 		# Draw initial images
-		leftRect.draw()
-		rightRect.draw()
-		leftImage.draw()
-		rightImage.draw()
+		topRightRect.draw()
+		topLeftRect.draw()
+		bottomRightRect.draw()
+		bottomLeftRect.draw()
+
+		topRightImage.draw()
+		topLeftImage.draw()
+		bottomRightImage.draw()
+		bottomLeftImage.draw()
 		self.experiment.win.flip()
 
-		leftAnimation = LoomAnimation(
-			stim=leftImage,
+		topRightAnimation = LoomAnimation(
+			stim=topRightImage,
 			win=self.experiment.win,
-			init_size=leftImage.size,
+			init_size=topRightImage.size,
+			target_size_factor=self.targetSizeFactor,
+			loom_in_duration=self.loomDuration,
+			loom_out_duration=self.loomDuration,
+			wiggle_duration=self.wiggleDuration,
+			jiggle_amplitude=self.jiggleAmplitude,
+			jiggle_frequency=self.jiggleFrequency,
+			looping= True
+		)
+
+		topLeftAnimation = LoomAnimation(
+			stim=topLeftImage,
+			win=self.experiment.win,
+			init_size=topLeftImage.size,
+			target_size_factor=self.targetSizeFactor,
+			loom_in_duration=self.loomDuration,
+			loom_out_duration=self.loomDuration,
+			wiggle_duration=self.wiggleDuration,
+			jiggle_amplitude=self.jiggleAmplitude,
+			jiggle_frequency=self.jiggleFrequency,
+			looping= True
+		)
+
+		bottomRightAnimation = LoomAnimation(
+			stim=bottomRightImage,
+			win=self.experiment.win,
+			init_size=bottomRightImage.size,
+			target_size_factor=self.targetSizeFactor,
+			loom_in_duration=self.loomDuration,
+			loom_out_duration=self.loomDuration,
+			wiggle_duration=self.wiggleDuration,
+			jiggle_amplitude=self.jiggleAmplitude,
+			jiggle_frequency=self.jiggleFrequency,
+			looping= True
+		)
+
+		bottomLeftAnimation = LoomAnimation(
+			stim=bottomLeftImage,
+			win=self.experiment.win,
+			init_size=bottomLeftImage.size,
 			target_size_factor=self.targetSizeFactor,
 			loom_in_duration=self.loomDuration,
 			loom_out_duration=self.loomDuration,
@@ -472,19 +539,6 @@ class ExpPresentation(Exp):
 			looping= True
 		)
 		
-		rightAnimation = LoomAnimation(
-			stim=rightImage,
-			win=self.experiment.win,
-			init_size=leftImage.size,
-			target_size_factor=self.targetSizeFactor,
-			loom_in_duration=self.loomDuration,
-			loom_out_duration=self.loomDuration,
-			wiggle_duration=self.wiggleDuration,
-			jiggle_amplitude=self.jiggleAmplitude,
-			jiggle_frequency=self.jiggleFrequency,
-			looping= True
-		)
-
 		trialTimerStart = libtime.get_time()
 		libtime.pause(self.startSilence)
 
@@ -496,13 +550,17 @@ class ExpPresentation(Exp):
 
 		while (libtime.get_time() - trialTimerStart) < trial_duration:
 			elapsed_time = libtime.get_time() - trialTimerStart
+			
+			topRightRect.draw()
+			topLeftRect.draw()
+			bottomRightRect.draw()
+			bottomLeftRect.draw()
 
-			leftAnimation.update()
-			rightAnimation.update()
-			leftRect.draw()
-			rightRect.draw()
-			leftImage.draw()
-			rightImage.draw()
+			topLeftAnimation.update()
+			topRightAnimation.update()
+			bottomLeftAnimation.update()
+			bottomRightAnimation.update()
+			
 
 			self.experiment.win.flip()
 
