@@ -1,4 +1,6 @@
 ## ignoring by default
+**/**/**/delete
+**/**/**/**/delete
 .DS_Store
 .ipynb_checkpoints/
 *.json
@@ -25,6 +27,9 @@ auth.txt
 node_modules/
 features/
 .Rproj.user
+.idea/
+.vs/
+*.pickle
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

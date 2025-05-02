@@ -1,1 +1,0 @@
-timestamp,eyetrackerLog,sampledLook,avgPOS,curLook,response

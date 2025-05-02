@@ -230,7 +230,7 @@ class ExpPresentation(Exp):
 		self.stim_size = (500,500)
 		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 190), size = self.rect_size)
 		self.aoiRight = aoi.AOI('rectangle', pos= (1120, 190), size=self.rect_size)
-		self.ISI = 1000
+		self.ISI = 500
 		self.startSilence = 0
 		self.endSilence = 1000
 
@@ -580,16 +580,16 @@ class ExpPresentation(Exp):
 		)
 
 		# Draw background rectangles first, then the images
-		self.leftRect.draw()
-		self.rightRect.draw()
-		self.leftStimImage.draw()
-		self.rightStimImage.draw()
+		#self.leftRect.draw()
+		#self.rightRect.draw()
+		#self.leftStimImage.draw()
+		#self.rightStimImage.draw()
 		
 		self.experiment.win.flip()
 
 		# Initialize eyetracker
 
-		libtime.pause(self.ISI)
+		#libtime.pause(self.ISI)
 
 		if self.experiment.subjVariables['eyetracker'] == 'yes':
 			self.experiment.tracker.start_recording()
