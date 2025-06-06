@@ -22,8 +22,6 @@ import csv
 import os
 import random
 
-
-
 class Exp:
 	def __init__(self):
 		self.expName = "BounCES"
