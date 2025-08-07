@@ -1,0 +1,342 @@
+---
+title: "BounCES: Pilot 2 LWL"
+date: "February 17th 2025"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE}
+#set working directory
+#load relevant packages
+library(tidyverse)
+library(ggsignif)
+library(lme4)
+library(car)
+library(naniar)
+library(gridExtra)
+library(here)
+
+
+read_file_path <- here("analysis/preprocessedData/eyetrackingData/pilot_v4")
+
+d <- read_csv(here(read_file_path, "full_lwl_aois.csv")) %>%
+  janitor::clean_names()
+```
+
+```{r, echo = F, message = F}
+#create a data frame that only includes the primary windows of analysis
+d$accuracy <- ifelse(d$look_aoi == "left" & d$target_object_pos == "centerLeft"|
+                       d$look_aoi == "right" & d$target_object_pos == "centerRight", 1,
+                     ifelse(d$look_aoi == "left" & d$target_object_pos == "centerRight"|
+                            d$look_aoi == "right" & d$target_object_pos == "centerLeft",
+                            0, NA))
+
+#re-center time so 0 is at target word onsent
+d$time_c <- d$time_bin_ms - 2500
+
+cleaning = d %>%
+  filter(time_c >= 300 & time_c <= 1800) %>% # select time window of analysis
+  group_by(subj_code, trial_number, condition) %>% #aggregate data according to Subject, Trial, and Condition
+  summarise(
+    maxN=length(accuracy), #calculate the number of frames
+    lostN = sum(is.na(accuracy)), #calulate the number of frames that do not include a L or R look
+    percentMissingFrames = round((lostN/maxN),digits=4)*100) %>% #calculate the % of frames that have missing data within a trial
+  select(trial_number ,condition, percentMissingFrames)
+
+# append to the data frame
+Data <- left_join(d,cleaning)
+
+#remove data cleaning frame
+remove(cleaning)
+
+#remove missing data & calculate usable trials by Subject
+missingDF <- Data %>% 
+  select(c('subj_code','trial_number','condition','time_c',
+           'percentMissingFrames')) %>%
+  filter(percentMissingFrames < 50) %>% #remove trials that have more than 50% of frames with missing data
+  group_by(subj_code, condition) %>% 
+  summarise(N=n_distinct((trial_number))) #calculate the number of usable trials 
+
+#calculate total number of missing trials
+missingTrials <- Data %>% 
+  select(c('subj_code','trial_number','condition','time_c',
+           'percentMissingFrames')) %>%
+  filter(percentMissingFrames > 50) %>% #remove trials that have more than 50% of frames with missing data
+  group_by(condition) %>% 
+  summarise(N=n_distinct((trial_number)))
+
+#calulate uable trials by Task Type (Condition)
+missingDFSummary <- missingDF %>%
+  group_by(condition) %>%
+  summarise(
+    meanN=mean(N,na.rm=T), #average number of trials
+    SD=sd(N,na.rm=T),
+    N=sum(!is.na(N)), #number of children
+    SE=SD/sqrt(N),
+    lower=meanN-SE,
+    upper=meanN+SE
+  )
+
+#plot the distribution of usable trials
+ggplot(missingDFSummary,aes(x=condition,y=meanN)) +
+  geom_violin(data = missingDF,aes(x = condition, y = N))+
+  geom_point(shape=16,fill='black',colour='black',size=2)+ #plot the mean for each condition
+  geom_point(data=missingDF, aes(y=N),stat='identity',colour='gray', position=position_jitter(width = 0.1,height=0))+ # plot number of usable trials per subject
+  geom_errorbar(width=.2, aes(ymin=lower, ymax=upper)) +
+  theme_bw(base_size=11) +
+  coord_cartesian(ylim=c(-0.1,4),expand=F) +
+  scale_y_continuous(breaks=seq(from=0,to=4,by=2)) +
+  labs(x='Condition',y='Usable Trials')
+```
+
+# Time Course
+```{r, echo = F, message = F, warning = F}
+Data$accuracy <- as.numeric(Data$accuracy)
+Data$type <- ifelse(Data$condition == "Practice", "Familiar Word", "Experimental")
+
+#create data frame for plotting proportion of looks to the target word over time
+plotC = Data %>% 
+  filter(percentMissingFrames < 50 & time_c >= -2000 & 
+           time_c <= 2000) %>% #select LWL trials within a specified time window and maximum percentage of missing frames
+  group_by(subj_code, time_c, condition, trial_number, type) %>%
+  summarise(accuracy = mean(accuracy,na.rm=T)) %>% #calculate proportion of looks to the target by subject, time, and task
+  group_by(time_c, condition, type) %>% # aggregate across participants
+  summarise(
+    N = sum(!is.na(accuracy)), # number of participants included in average
+    SD = sd(accuracy,na.rm=T),
+    SE = SD/sqrt(N),
+    accuracy = mean(accuracy,na.rm=T), # average accuracy for each time window in the LWL task
+    lower = accuracy-SE,
+    upper = accuracy+SE
+  )
+
+
+#plot time course of looks
+ggplot(plotC, 
+       aes(x=time_c, y=accuracy, color = condition)) +
+  geom_hline(aes(yintercept=0.5),linetype='solid',color='gray') + 
+  geom_smooth(aes(ymin=lower, ymax=upper), stat="identity") +
+  geom_vline(aes(xintercept=0), linetype="dashed", color="black") + # target noun onset
+  geom_vline(aes(xintercept=300), linetype="dashed", color="black") + # start of critical window
+  geom_vline(aes(xintercept=1800),linetype="dashed",color="black") + # end of critical window
+  geom_line() +
+  theme_bw(base_size=12) +
+  coord_cartesian(xlim=c(-1000,2000), ylim= c(-.01,1.01),expand=F) +
+  scale_x_continuous(breaks=seq(from=-1000,to=2000,by=500)) +
+  scale_y_continuous(breaks=seq(from=0,to=1,by=.1)) +
+  labs(x='Time since target word (in ms)',y='Proportion Looking to Target') +
+  theme(legend.justification=c(1,0), plot.title=element_text(hjust=.5),legend.position="right",
+        legend.background=element_rect(fill= NA, color=NA),legend.title=element_blank(),
+        legend.text = element_text(size = 11),axis.text.x = element_text(angle = 45, size=12, hjust = 1))
+
+#create data frame for plotting proportion of looks to the target word over time
+plotC_sub = Data %>% 
+  filter(percentMissingFrames < 50 & time_c >= -2000 & 
+           time_c <= 2000 & condition != "Practice") %>% #select LWL trials within a specified time window and maximum percentage of missing frames
+  group_by(subj_code, time_c, condition, trial_number) %>%
+  summarise(accuracy = mean(accuracy,na.rm=T)) %>% #calculate proportion of looks to the target by subject, time, and task
+  group_by(time_c, condition, subj_code) %>% # aggregate across participants
+  summarise(
+    N = sum(!is.na(accuracy)), # number of participants included in average
+    SD = sd(accuracy,na.rm=T),
+    SE = SD/sqrt(N),
+    accuracy = mean(accuracy,na.rm=T), # average accuracy for each time window in the LWL task
+    lower = accuracy-SE,
+    upper = accuracy+SE
+  )
+
+plotC_audio = Data %>% 
+  filter(percentMissingFrames < 50 & time_c >= -2000 & 
+           time_c <= 2000 & condition != "Practice") %>% #select LWL trials within a specified time window and maximum percentage of missing frames
+  group_by(audio, time_c, condition, trial_number) %>%
+  summarise(accuracy = mean(accuracy,na.rm=T)) %>% #calculate proportion of looks to the target by subject, time, and task
+  group_by(time_c, condition, audio) %>% # aggregate across participants
+  summarise(
+    N = sum(!is.na(accuracy)), # number of participants included in average
+    SD = sd(accuracy,na.rm=T),
+    SE = SD/sqrt(N),
+    accuracy = mean(accuracy,na.rm=T), # average accuracy for each time window in the LWL task
+    lower = accuracy-SE,
+    upper = accuracy+SE
+  )
+
+#plot time course of looks
+ggplot(plotC_audio, aes(x=time_c, y=accuracy, color = condition)) + 
+  geom_hline(aes(yintercept=0.5),linetype='solid',color='gray') + 
+  geom_smooth(aes(ymin=lower, ymax=upper), stat="identity") +
+  geom_vline(aes(xintercept=0), linetype="dashed", color="black") + # target noun onset
+  geom_vline(aes(xintercept=300), linetype="dashed", color="black") + # start of critical window
+  geom_vline(aes(xintercept=1800),linetype="dashed",color="black") + # end of critical window
+  geom_line() +
+  theme_bw(base_size=12) +
+  coord_cartesian(xlim=c(-1000,2000), ylim= c(-.01,1.01),expand=F) +
+  scale_x_continuous(breaks=seq(from=-1000,to=2000,by=500)) +
+  scale_y_continuous(breaks=seq(from=0,to=1,by=.1)) +
+  labs(x='Time since target word (in ms)',y='Proportion Looking to Target') +
+  theme(legend.justification=c(1,0), plot.title=element_text(hjust=.5),legend.position="right",
+        legend.background=element_rect(fill= NA, color=NA),legend.title=element_blank(),
+        legend.text = element_text(size = 11),axis.text.x = element_text(angle = 45, size=12, hjust = 1)) +
+  facet_wrap(~audio, nrow=3)
+
+
+#plot time course of looks
+ggplot(plotC_sub, aes(x=time_c, y=accuracy, color = condition)) + 
+  geom_hline(aes(yintercept=0.5),linetype='solid',color='gray') + 
+  geom_smooth(aes(ymin=lower, ymax=upper), stat="identity") +
+  geom_vline(aes(xintercept=0), linetype="dashed", color="black") + # target noun onset
+  geom_vline(aes(xintercept=300), linetype="dashed", color="black") + # start of critical window
+  geom_vline(aes(xintercept=1800),linetype="dashed",color="black") + # end of critical window
+  geom_line() +
+  theme_bw(base_size=12) +
+  coord_cartesian(xlim=c(-1000,2000), ylim= c(-.01,1.01),expand=F) +
+  scale_x_continuous(breaks=seq(from=-1000,to=2000,by=500)) +
+  scale_y_continuous(breaks=seq(from=0,to=1,by=.1)) +
+  labs(x='Time since target word (in ms)',y='Proportion Looking to Target') +
+  theme(legend.justification=c(1,0), plot.title=element_text(hjust=.5),legend.position="right",
+        legend.background=element_rect(fill= NA, color=NA),legend.title=element_blank(),
+        legend.text = element_text(size = 11),axis.text.x = element_text(angle = 45, size=12, hjust = 1)) +
+  facet_wrap(~subj_code, nrow=3)
+
+
+#create data frame for plotting proportion of looks to the target word over time
+plotC_tr = Data %>% 
+  filter(percentMissingFrames < 50 & time_c >= -2000 & 
+           time_c <= 2000 & condition != "Practice") %>% #select LWL trials within a specified time window and maximum percentage of missing frames
+  group_by(trial_number, time_c, condition, subj_code) %>%
+  summarise(accuracy = mean(accuracy,na.rm=T)) %>% #calculate proportion of looks to the target by subject, time, and task
+  group_by(time_c, condition, trial_number) %>% # aggregate across participants
+  summarise(
+    N = sum(!is.na(accuracy)), # number of participants included in average
+    SD = sd(accuracy,na.rm=T),
+    SE = SD/sqrt(N),
+    accuracy = mean(accuracy,na.rm=T), # average accuracy for each time window in the LWL task
+    lower = accuracy-SE,
+    upper = accuracy+SE
+  )
+
+
+#plot time course of looks
+ggplot(plotC_tr, aes(x=time_c, y=accuracy, color = condition)) + 
+  geom_hline(aes(yintercept=0.5),linetype='solid',color='gray') + 
+  geom_smooth(aes(ymin=lower, ymax=upper), stat="identity") +
+  geom_vline(aes(xintercept=0), linetype="dashed", color="black") + # target noun onset
+  geom_vline(aes(xintercept=300), linetype="dashed", color="black") + # start of critical window
+  geom_vline(aes(xintercept=1800),linetype="dashed",color="black") + # end of critical window
+  geom_line() +
+  theme_bw(base_size=12) +
+  coord_cartesian(xlim=c(-1000,2000), ylim= c(-.01,1.01),expand=F) +
+  scale_x_continuous(breaks=seq(from=-1000,to=2000,by=500)) +
+  scale_y_continuous(breaks=seq(from=0,to=1,by=.1)) +
+  labs(x='Time since target word (in ms)',y='Proportion Looking to Target') +
+  theme(legend.justification=c(1,0), plot.title=element_text(hjust=.5),legend.position="right",
+        legend.background=element_rect(fill= NA, color=NA),legend.title=element_blank(),
+        legend.text = element_text(size = 11),axis.text.x = element_text(angle = 45, size=12, hjust = 1)) +
+  facet_wrap(~trial_number, nrow=3)
+
+#ggsave(paste('Figure2(A)',".pdf",sep=''),width=7, height = 5, dpi=300)
+
+```
+
+## Accuracy collapsed across critical window by condition
+```{r, fig.width = 6, fig.height = 3, echo = F, message = F}
+
+plotC_bar = Data %>% 
+  filter(percentMissingFrames < 50 & time_c >= 300 & 
+           time_c <= 1800 & condition != "Practice") %>% #select LWL trials within a specified time window and maximum percentage of missing frames
+  group_by(trial_number, condition, subj_code) %>%
+  summarise(accuracy = mean(accuracy,na.rm=T)) %>% #calculate proportion of looks to the target by subject, time, and task
+  group_by(condition) %>% # aggregate across participants
+  summarise(
+    N = sum(!is.na(accuracy)), # number of participants included in average
+    SD = sd(accuracy,na.rm=T),
+    SE = SD/sqrt(N),
+    accuracy = mean(accuracy,na.rm=T), # average accuracy for each time window in the LWL task
+    lower = accuracy-SE,
+    upper = accuracy+SE
+  )
+
+ggplot(plotC_bar, aes(x = condition, y = accuracy, fill = condition)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = lower, ymax = upper, width = .25)) +
+  labs(x = "Condition", y = "Accuracy", title = "Critical Window 300-1800ms") +
+  theme_bw() +
+  geom_hline(yintercept = 0.5, color = "black", linetype = 'dashed') +
+  theme(legend.position = "none") +
+  ylim(0, 1) + 
+  scale_fill_manual(values = c("Boundary"="#3a86ff",
+                                "Prototype"="#ff006e"))
+```
+
+## Time course collapsed across conditions
+```{r, echo = F, message = F}
+#create data frame for plotting proportion of looks to the target word over time
+
+plotC_both = Data %>% 
+  filter(percentMissingFrames < 50 & time_c >= -2000 & time_c <= 2500 & condition != "Practice") %>%
+  group_by(subj_code,time_c, trial_number) %>%
+  summarise(accuracy = mean(accuracy,na.rm=T)) %>% 
+  group_by(time_c, subj_code) %>% 
+  summarise(
+    N = sum(!is.na(accuracy)),
+    SD = sd(accuracy,na.rm=T),
+    SE = SD/sqrt(N),
+    accuracy = mean(accuracy,na.rm=T),
+    lower = accuracy-SE,
+    upper = accuracy+SE
+  )
+
+
+#plot the time course of target looking (accuracy)
+ggplot(plotC_both, aes(x=time_c, y=accuracy)) + 
+  geom_hline(aes(yintercept=0.5),linetype='solid',color='gray') + 
+  geom_smooth(aes(ymin=lower, ymax=upper), stat="identity") +
+  geom_vline(aes(xintercept=0), linetype="dashed", color="black") +
+  geom_vline(aes(xintercept=300), linetype="dashed", color="black") +
+  geom_vline(aes(xintercept=1800),linetype="dashed",color="black") +
+  geom_line() +
+  theme_bw(base_size=12) +
+  coord_cartesian(xlim=c(-2000,2500), ylim= c(-.01,1.01),expand=F) +
+  scale_x_continuous(breaks=seq(from=-2000,to=2500,by=250)) +
+  scale_y_continuous(breaks=seq(from=0,to=1,by=.1)) +
+  labs(x='Time since target word (in ms)',y='Proportion Looking to Target') +
+  theme(legend.justification=c(1,0), plot.title=element_text(hjust=.5),legend.position=c(0.8,0.02),
+        legend.background=element_rect(fill= NA, color=NA),legend.title=element_blank(),
+        legend.text = element_text(size = 11),axis.text.x = element_text(angle = 45, size=12, hjust = 1)) +
+  facet_wrap(~subj_code)
+
+#ggsave(paste('Figure2(B)',".pdf",sep=''),width=7, height = 5, dpi=300)
+```
+
+## By Condition Accuracy within-Subjects
+```{r, echo = F, message = F}
+plotC_sub <- Data %>%
+  filter(time_c >= 300 & time_c <= 1800 & condition != "Practice") %>%
+  group_by(subj_code, condition, trial_number) %>%
+  summarise(accuracy = mean(accuracy, na.rm = T)) %>%
+  group_by(subj_code, condition) %>% 
+  summarise(
+    N = sum(!is.na(accuracy), na.rm=T),
+    SD = sd(accuracy,na.rm=T),
+    SE = SD/sqrt(N),
+    accuracy = mean(accuracy,na.rm=T),
+    lower = accuracy-SE,
+    upper = accuracy+SE
+  )
+
+ggplot(plotC_sub, aes(x = condition, y = accuracy, color = subj_code, 
+                      group = subj_code)) +
+  geom_point() +
+  geom_line()
+
+```
+
+
+```{r}
+
+diff_csub <- plotC_sub |> ungroup() |> group_by(subj_code) |> 
+  summarize(mean_accuracy = mean(accuracy))
+  #pivot_wider(names_from = condition, values_from = mean_accuracy) |> 
+  #mutate(LWL_Diff = Boundary - Prototype) 
+
+diff_csub
+```
+
