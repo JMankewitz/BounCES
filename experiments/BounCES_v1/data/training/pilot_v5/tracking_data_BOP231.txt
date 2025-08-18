@@ -1,0 +1,17 @@
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	2	1	B1	B2	B3	B4	bosas_lookcool	8000.0	None	None	None	None	None	None	None	None	None	None	None	2	1003011.8684000336	1012031.4032000024	9019.534799968824
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	3	1	C2	C3	C4	C1	rengs_wowthose	8000.0	None	None	None	None	None	None	None	None	None	None	None	3	1013648.1736000278	1022663.1241000141	9014.950499986298
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	4	1	A1	A2	A3	A4	doffs_seethese	8000.0	None	None	None	None	None	None	None	None	None	None	None	4	1024283.5403000354	1033303.6000999855	9020.059799950104
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	5	1	C4	C3	C1	C2	rengs_lookcool	8000.0	None	None	None	None	None	None	None	None	None	None	None	5	1034859.0566000203	1043882.1152999881	9023.058699967805
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	6	1	A4	A1	A3	A2	doffs_wowthose	8000.0	None	None	None	None	None	None	None	None	None	None	None	6	1045439.8604999878	1054462.1132999891	9022.252800001297
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	7	1	B3	B1	B4	B2	bosas_seethese	8000.0	None	None	None	None	None	None	None	None	None	None	None	7	1056003.0769000296	1065023.9241999807	9020.847299951129
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	9	1	A3	A4	A1	A2	doffs_lookcool	8000.0	None	None	None	None	None	None	None	None	None	None	None	9	1073246.5254000272	1082262.8777000355	9016.352300008293
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	10	1	C4	C2	C3	C1	rengs_seethese	8000.0	None	None	None	None	None	None	None	None	None	None	None	10	1083809.5642999979	1092833.165500022	9023.601200024132
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	11	1	B4	B1	B2	B3	bosas_wowthose	8000.0	None	None	None	None	None	None	None	None	None	None	None	11	1094372.5530999945	1103394.0669000149	9021.51380002033
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	12	1	C4	C3	C1	C2	rengs_lookcool	8000.0	None	None	None	None	None	None	None	None	None	None	None	12	1104951.6400999855	1113973.7186999992	9022.078600013629
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	13	1	B3	B4	B2	B1	bosas_wowthose	8000.0	None	None	None	None	None	None	None	None	None	None	None	13	1115531.8446999881	1124554.042200034	9022.197500045877
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	14	1	C1	C4	C3	C2	rengs_seethese	8000.0	None	None	None	None	None	None	None	None	None	None	None	14	1126115.5844000168	1135134.5022000023	9018.917799985502
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	16	1	A1	A2	A3	A4	doffs_wowthose	8000.0	None	None	None	None	None	None	None	None	None	None	None	16	1143390.9691000008	1152412.0144000044	9021.045300003607
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	17	1	B4	B1	B2	B3	bosas_seethese	8000.0	None	None	None	None	None	None	None	None	None	None	None	17	1153950.8484000107	1162972.1105000353	9021.262100024614
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	18	1	A1	A3	A4	A2	doffs_lookcool	8000.0	None	None	None	None	None	None	None	None	None	None	None	18	1164515.830199991	1173543.0998000083	9027.269600017462
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	19	1	C1	C2	C4	C3	rengs_wowthose	8000.0	None	None	None	None	None	None	None	None	None	None	None	19	1175095.2924999874	1184112.5952000148	9017.302700027358
+BOP231	keyboard	m	32.2	1	VH	1	2	yes	gaze	training	20	1	A4	A3	A2	A1	doffs_seethese	8000.0	None	None	None	None	None	None	None	None	None	None	None	20	1185660.5170000112	1194683.2489999942	9022.73199998308
