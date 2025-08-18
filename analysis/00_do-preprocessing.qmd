@@ -32,7 +32,7 @@ source(here("analysis/functions/Pygaze_InterpolateAOIHits.R"))
 eyetracking_data_path <- here("experiments/BounCES_v1/eyetrackingData")
 handcoding_data_path <- here("analysis/preprocessedData/handcodedData")
 
-write_file_location <- here("analysis/preprocessedData/eyetrackingData/pilot_v2")
+write_file_location <- here("analysis/preprocessedData/eyetrackingData/pilot_v4")
 
 subj_data <- here("analysis/preprocessedData/subjData/subject_data.xlsx")
 ```
@@ -45,7 +45,7 @@ subj_data <- here("analysis/preprocessedData/subjData/subject_data.xlsx")
 fullGazeDataNames <- list.files(path = eyetracking_data_path, pattern = ".tsv",
                       full.names = TRUE, recursive = TRUE)
 
-gazeDataNames_pilot <- fullGazeDataNames[grepl("pilot_v2", fullGazeDataNames)]
+gazeDataNames_pilot <- fullGazeDataNames[grepl("pilot_v4", fullGazeDataNames)]
 #gazeDataNames_prac <- fullGazeDataNames[grepl("prac", fullGazeDataNames)]
 
 d_full_raw <- do.call(dplyr::bind_rows, lapply(gazeDataNames_pilot, integrateEventData))
@@ -406,10 +406,10 @@ d_final_lwl_aoi <-
 
 ```{r}
 d_final_lwl_aoi %>% 
-  mutate(AOICond = case_when((LookAOI == "left" & TargetObjectPos == "bottomLeft") ~ "target",
-                             (LookAOI == "right" & TargetObjectPos == "bottomRight") ~ "target",
-                             (LookAOI == "left" & DistracterObjectPos == "bottomLeft") ~ "distractor",
-                             (LookAOI == "right" & DistracterObjectPos == "bottomRight") ~ "distractor",
+  mutate(AOICond = case_when((LookAOI == "left" & TargetObjectPos == "centerLeft") ~ "target",
+                             (LookAOI == "right" & TargetObjectPos == "centerRight") ~ "target",
+                             (LookAOI == "left" & DistracterObjectPos == "centerLeft") ~ "distractor",
+                             (LookAOI == "right" & DistracterObjectPos == "centerRight") ~ "distractor",
                              TRUE ~ LookAOI)) %>% 
   ggplot(aes(x = TimeBinMs, y = AOICond, color = AOICond)) +
   geom_point(alpha = .05) + 

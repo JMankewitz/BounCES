@@ -10,16 +10,23 @@ editor: visual
 library(here)
 library(tidyverse)
 
-read_file_path <- here("analysis/preprocessedData/eyetrackingData/pilot_v2")
+read_file_path <- here("analysis/preprocessedData/eyetrackingData/pilot_v4")
 
 d_active_test <- read_csv(here(read_file_path, "full_active_test_aois.csv"))
 subj_info <- read_csv(here("analysis/subject_info.csv"))
 image_path <- "images/pilot_2"
 ```
 
+subject blacklist
+
 ```{r}
+subj_filter <- c("BOP221r")
+```
+
+```{r fig.width = 6, fig.height = 3}
 
 final_d_active_test <- d_active_test %>% 
+  filter(!subjCode %in% subj_filter) |> 
   left_join(subj_info) %>% 
   mutate(condAOI = case_when(LookAOI == "left" ~ leftStimType,
                              LookAOI == "right" ~ rightStimType,
@@ -34,14 +41,20 @@ sample_duration_by_subj <- final_d_active_test |>
          total_time_s = total_time_ms/1000)
 
 sample_duration_across_subj <- 
-  sample_duration_by_subj |> group_by(condAOI) |> 
-  summarize(mean_duration = mean(total_time_s),
-         sd_duration = sd(total_time_s))
+  sample_duration_by_subj |> 
+  group_by(condAOI) |> 
+  summarize(N = n(), 
+            mean_duration = mean(total_time_s),
+          sd_duration = sd(total_time_s),
+          se_duration = sd_duration/sqrt(N),
+          lower = mean_duration-se_duration,
+    upper = mean_duration+se_duration)
 
 sample_duration_bar_across_trial <- sample_duration_across_subj |> 
   ggplot(aes(x = condAOI, y = mean_duration, fill = condAOI)) + 
   geom_bar(stat = "identity") + #facet_wrap(~trialIDfactor) + 
   geom_point(data = sample_duration_by_subj, aes(x = condAOI, y = total_time_s), alpha = .3) + 
+   geom_errorbar(aes(ymin = lower, ymax = upper, width = .25)) +
   theme_minimal() + 
   scale_fill_manual(values = c("boundary"="#3a86ff",
                                 "prototype"="#ff006e")) + 
@@ -69,4 +82,25 @@ sample_duration_bar <- sample_duration_by_subj |>
   facet_wrap(~subjCode)
 
 sample_duration_bar
+```
+
+```{r}
+samp_diff <- sample_duration_by_subj |> 
+  group_by(subjCode, condAOI) |> 
+  summarize(mean_samp_time = mean(total_time_ms)) |> 
+  pivot_wider(values_from = mean_samp_time, names_from = condAOI) |> 
+  mutate(Samp_Diff = boundary - prototype) 
+```
+
+```{r}
+samp_diff |> left_join(diff_csub |> rename(subjCode = subj_code)) |> 
+  left_join(subj_info) |> 
+  ggplot(aes(x = mean_accuracy, y = Samp_Diff, color = age)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  theme_minimal()
+```
+
+```{r}
+samp_diff
 ```
